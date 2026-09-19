@@ -28,6 +28,8 @@ public class MecanumDrive {
             motor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
             motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         }
+        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        rearRight.setDirection(DcMotorSimple.Direction.REVERSE);
     }
     public void teleop(GamepadEx gamepad, Telemetry telemetry) {
         double x = -gamepad.getLeftX();
