@@ -41,8 +41,8 @@ public final class Constants {
         c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 
         // TODO: measure your pod offsets (inches) or run the Pinpoint AutoTune.
-        c.xPodOffset.set(-0.3257888508593942);
-        c.yPodOffset.set(-0.14364017276313362);
+        c.xPodOffset.set(-3.62);
+        c.yPodOffset.set(-1.26);
 
         c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
         c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
