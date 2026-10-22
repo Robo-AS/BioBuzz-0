@@ -79,8 +79,9 @@ public class LimelightTest extends OpMode {
             double forward = (TARGET_TA - ta) * KP_FORWARD;
 
             driveMecanum(-forward*speed, -strafe*speed, 0);
-        } else {
-            driveMecanum(0, 0, 0);
+        }
+        else {
+            driveMecanum(0, 0, 0.25);
         }
     }
 

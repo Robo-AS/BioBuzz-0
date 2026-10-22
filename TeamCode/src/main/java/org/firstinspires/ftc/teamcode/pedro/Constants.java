@@ -22,29 +22,24 @@ public final class Constants {
     }
 
     // Motor names/directions copied from your MecanumDrive class.
-    public static final MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
+    public static MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
         c.frontLeftName.set("frontLeft");
-        c.backLeftName.set("rearLeft");
         c.frontRightName.set("frontRight");
+        c.backLeftName.set("rearLeft");
         c.backRightName.set("rearRight");
-
-        c.frontLeftDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.frontRightDirection.set(DcMotorSimple.Direction.REVERSE);
-        c.backRightDirection.set(DcMotorSimple.Direction.REVERSE);
-
+        c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
+        c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
         c.manualBrakeMode.set(true);
     });
 
-    public static final PinpointConfig localizerConfig = new PinpointConfig(c -> {
-        c.name.set("pinpoint"); // must match the name in your Robot Configuration
+    public static PinpointConfig localizerConfig = new PinpointConfig(c -> {
+        c.name.set("pinpoint");
         c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-
-        // TODO: measure your pod offsets (inches) or run the Pinpoint AutoTune.
-        c.xPodOffset.set(-0.3257888508593942);
-        c.yPodOffset.set(-0.14364017276313362);
-
-        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        c.xPodOffset.set(-4.099839578463337);
+        c.yPodOffset.set(-0.04228262450751357);
+        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.REVERSED);
         c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
         c.globalDistanceUnit.set(DistanceUnit.INCH);
         c.offsetUnits.set(DistanceUnit.INCH);
