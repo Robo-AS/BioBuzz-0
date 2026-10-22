@@ -33,6 +33,14 @@ public class MecanumDrive {
     private long lastAimTimeNs = 0;
     private boolean aimWasActive = false;
     public boolean aimedAtGoal = false;
+    final double velocityLimitTicksPerSecond;
+    public static double ACCEL_CHANGE_PER_SECOND = 8.0;
+    public static double DECEL_CHANGE_PER_SECOND = 3.0;
+
+    private double profiledX;
+    private double profiledY;
+    private long lastProfileTimeNs;
+
 
     public MecanumDrive(HardwareMap hardwareMap) {
         frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
@@ -50,6 +58,92 @@ public class MecanumDrive {
         rearLeft.setDirection(DcMotorSimple.Direction.FORWARD);
         rearRight.setDirection(DcMotorSimple.Direction.REVERSE);
         frontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        double slowestMotor = Double.POSITIVE_INFINITY;
+        for (DcMotorEx motor : motors) {
+            slowestMotor = Math.min(
+                    slowestMotor,
+                    motor.getMotorType().getAchieveableMaxTicksPerSecond()
+            );
+        }
+        velocityLimitTicksPerSecond = slowestMotor * 1;
+    }
+
+    public void setDriveVelocityMode(boolean enabled) {
+        DcMotorEx.RunMode mode = enabled
+                ? DcMotorEx.RunMode.RUN_USING_ENCODER
+                : DcMotorEx.RunMode.RUN_WITHOUT_ENCODER;
+
+        for (DcMotorEx motor : motors) {
+            motor.setPower(0.0);
+            motor.setMode(mode);
+        }
+    }
+
+    public void fieldCentricVelocity(GamepadEx gamepad, double headingRadians) {
+        fieldCentricVelocity(gamepad, headingRadians, addons(-gamepad.getRightX()));
+    }
+
+    public void fieldCentricVelocity(GamepadEx gamepad, double headingRadians,
+                                     double turnPower) {
+        double targetX = addons(gamepad.getLeftY()) * reverse;
+        double targetY = addons(-gamepad.getLeftX()) * reverse;
+
+        long now = System.nanoTime();
+        double dt = lastProfileTimeNs == 0
+                ? 0.0
+                : Math.min(0.1, (now - lastProfileTimeNs) / 1_000_000_000.0);
+        lastProfileTimeNs = now;
+
+        double changeX = targetX - profiledX;
+        double changeY = targetY - profiledY;
+        double changeLength = Math.hypot(changeX, changeY);
+        double currentSpeed = Math.hypot(profiledX, profiledY);
+        double targetAlongMotion = currentSpeed < 0.0001
+                ? 0.0
+                : (targetX * profiledX + targetY * profiledY) / currentSpeed;
+
+        double changeRate = targetAlongMotion < currentSpeed
+                ? DECEL_CHANGE_PER_SECOND
+                : ACCEL_CHANGE_PER_SECOND;
+
+        double maximumChange = changeRate * dt;
+
+        if (changeLength > maximumChange && changeLength > 0.0) {
+            double scale = maximumChange / changeLength;
+            changeX *= scale;
+            changeY *= scale;
+        }
+
+        profiledX += changeX;
+        profiledY += changeY;
+
+        double cos = Math.cos(headingRadians);
+        double sin = Math.sin(headingRadians);
+        double rotatedX = profiledX * cos + profiledY * sin;
+        double rotatedY = -profiledX * sin + profiledY * cos;
+        double r = Math.max(-1.0, Math.min(1.0, turnPower));
+
+        double leftFront = rotatedY + rotatedX + r;
+        double rightFront = rotatedY - rotatedX - r;
+        double leftRear = rotatedY - rotatedX + r;
+        double rightRear = rotatedY + rotatedX - r;
+
+        double maximum = Math.max(1.0, Math.max(
+                Math.max(Math.abs(leftFront), Math.abs(rightFront)),
+                Math.max(Math.abs(leftRear), Math.abs(rightRear))
+        ));
+
+        frontLeft.setVelocity(leftFront / maximum * velocityLimitTicksPerSecond);
+        frontRight.setVelocity(rightFront / maximum * velocityLimitTicksPerSecond);
+        rearLeft.setVelocity(leftRear / maximum * velocityLimitTicksPerSecond);
+        rearRight.setVelocity(rightRear / maximum * velocityLimitTicksPerSecond);
+    }
+
+    public void resetFreeRoamProfile() {
+        profiledX = 0.0;
+        profiledY = 0.0;
+        lastProfileTimeNs = 0;
     }
 
     // ---------------- Field centric ----------------
