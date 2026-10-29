@@ -22,24 +22,29 @@ public final class Constants {
     }
 
     // Motor names/directions copied from your MecanumDrive class.
-    public static MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
+    public static final MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
         c.frontLeftName.set("frontLeft");
-        c.frontRightName.set("frontRight");
         c.backLeftName.set("rearLeft");
+        c.frontRightName.set("frontRight");
         c.backRightName.set("rearRight");
-        c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
-        c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
-        c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
+
+        c.frontLeftDirection.set(DcMotorSimple.Direction.FORWARD);
+        c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD);
+        c.frontRightDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.backRightDirection.set(DcMotorSimple.Direction.REVERSE);
+
         c.manualBrakeMode.set(true);
     });
 
-    public static PinpointConfig localizerConfig = new PinpointConfig(c -> {
-        c.name.set("pinpoint");
+    public static final PinpointConfig localizerConfig = new PinpointConfig(c -> {
+        c.name.set("pinpoint"); // must match the name in your Robot Configuration
         c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        c.xPodOffset.set(-4.099839578463337);
-        c.yPodOffset.set(-0.04228262450751357);
-        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+
+        // TODO: measure your pod offsets (inches) or run the Pinpoint AutoTune.
+        c.xPodOffset.set(-3.62);
+        c.yPodOffset.set(-1.26);
+
+        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
         c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
         c.globalDistanceUnit.set(DistanceUnit.INCH);
         c.offsetUnits.set(DistanceUnit.INCH);
