@@ -10,6 +10,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import static org.firstinspires.ftc.teamcode.Constants.CONTROLLER_DEADZONE;
 import static org.firstinspires.ftc.teamcode.Constants.ROBOT_SPEED;
 
+import static java.sql.Types.NULL;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class MecanumDrive {
     public static double AIM_MAX_POWER = 0.8;
     public static double AIM_TOLERANCE_RAD = Math.toRadians(1.0);
     public static double AIM_TURN_SIGN = 1.0;      // flip to +1.0 if it turns AWAY from the goal
-    public static double SHOOTER_HEADING_OFFSET_RAD = Math.PI / 2.0; // if shooter isn't on the robot's front
+    public static double SHOOTER_HEADING_OFFSET_RAD = NULL; // if shooter isn't on the robot's front
 
     private double goalX = 0, goalY = 0;
     private double lastAimError = 0;

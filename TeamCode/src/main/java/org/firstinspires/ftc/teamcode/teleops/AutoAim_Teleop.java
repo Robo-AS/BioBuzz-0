@@ -9,17 +9,17 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.MecanumDrive;
 
-@TeleOp(name = "Auto Aim Test", group = "Test")
+@TeleOp(name = "Auto Aim Test", group = "BLUE")
 public class AutoAim_Teleop extends OpMode {
     // Goal position relative to the robot's start spot (Pedro units, inches).
-    private static final double GOAL_X = 74;
-    private static final double GOAL_Y = 191;
+    private static final double GOAL_X = 72;
+    private static final double GOAL_Y = 72;
 
     private Follower follower;
     private MecanumDrive drive;
     private GamepadEx driver;
     private final PoseFactory p = PoseFactory.degrees();
-    Pose startpose = p.of(9, 132, 90);
+    Pose startpose = p.of(138, 7, 90);
     private boolean previousAutoAim = true;
     private static final double HOLD_KP = 0.8;
     private static final double MAX_HOLD_TURN = 0.25;

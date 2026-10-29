@@ -22,63 +22,55 @@ public final class Constants {
     }
 
     // Motor names/directions copied from your MecanumDrive class.
-    public static final MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
+    public static MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
         c.frontLeftName.set("frontLeft");
-        c.backLeftName.set("rearLeft");
         c.frontRightName.set("frontRight");
+        c.backLeftName.set("rearLeft");
         c.backRightName.set("rearRight");
-
-        c.frontLeftDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.frontRightDirection.set(DcMotorSimple.Direction.REVERSE);
-        c.backRightDirection.set(DcMotorSimple.Direction.REVERSE);
-
-        c.manualBrakeMode.set(true);
+        c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
+        c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
     });
 
-    public static final PinpointConfig localizerConfig = new PinpointConfig(c -> {
-        c.name.set("pinpoint"); // must match the name in your Robot Configuration
+    public static PinpointConfig localizerConfig = new PinpointConfig(c -> {
+        c.name.set("pinpoint");
         c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-
-        // TODO: measure your pod offsets (inches) or run the Pinpoint AutoTune.
-        c.xPodOffset.set(-3.62);
-        c.yPodOffset.set(-1.26);
-
+        c.xPodOffset.set(1.8933607086421935);
+        c.yPodOffset.set(-3.876790024164155);
         c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
-        c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.REVERSED);
         c.globalDistanceUnit.set(DistanceUnit.INCH);
         c.offsetUnits.set(DistanceUnit.INCH);
     });
 
     // Starter values: fine for localization/auto-aim. Replace with Foresight
     // AutoTune output before you use Pedro to follow paths in autonomous.
-    public static final ForesightConfig foresightConfig = new ForesightConfig(c -> {
-        Controller primaryForward = Controller.proportional(0.30);
-        Controller secondaryForward = Controller.proportional(0.10);
-        Controller primaryLateral = Controller.proportional(0.30);
-        Controller secondaryLateral = Controller.proportional(0.10);
+    public static ForesightConfig foresightConfig = new ForesightConfig(
+            c -> {
+                Controller primaryTranslationalForward = Controller.proportional(0.1590274127823455);
+                Controller secondaryTranslationalForward = Controller.proportional(0.0587563797323468);
+                Controller primaryTranslationalLateral = Controller.proportional(0.20941540583948795);
+                Controller secondaryTranslationalLateral = Controller.proportional(0.07737339677498961);
 
-        c.forwardTranslational.set(
-                Controller.piecewise(secondaryForward).put(2.5, primaryForward));
-        c.strafeTranslational.set(
-                Controller.piecewise(secondaryLateral).put(2.5, primaryLateral));
+                c.forwardTranslational.set(Controller.piecewise(secondaryTranslationalForward).put(2.5, primaryTranslationalForward));
+                c.strafeTranslational.set(Controller.piecewise(secondaryTranslationalLateral).put(2.5, primaryTranslationalLateral));
 
-        c.coast.set(Controller.proportionalFeedforward(0.010978350889324107));
-        c.brake.set(Controller.proportionalFeedforward(0.008731598255925491));
-        c.headingFeedback.set(Controller.proportional(5.258721785960744));
-        c.headingBrakeCoefficients.set(
-                Vector2D.cartesian(0.05642143125655298, 0.0063829525363003695));
+                c.coast.set(Controller.proportionalFeedforward(0.01363330689406105));
+                c.brake.set(Controller.proportionalFeedforward(0.011588310859951892));
 
-        c.linearBrakeCoefficients.set(
-                Matrix.diag(0.10605894992901523, 0.08719146175596092));
-        c.quadraticBrakeCoefficients.set(
-                Matrix.diag(0.0014663966976606565, 0.0013837064502458813));
+                c.headingFeedback.set(Controller.proportional(2.0750606153797313));
+                c.headingBrakeCoefficients.set(Vector2D.cartesian(0.0442202889145124, 0.0030021938404393286));
 
-        c.maxAchievableForwardVelocity.set(72.72923108818539);
-        c.maxAchievableStrafeVelocity.set(52.34323936525474);
-        c.naturalForwardDeceleration.set(85.01144677379789);
-        c.naturalStrafeDeceleration.set(104.49787535782846);
-    });
+                c.linearBrakeCoefficients.set(Matrix.diag(0.050178201636501864, 0.06761673707017683));
+                c.quadraticBrakeCoefficients.set(Matrix.diag(0.0013489866362790415, 0.0010137710031664388));
+
+                c.maxAchievableForwardVelocity.set(77.98091924529521);
+                c.maxAchievableStrafeVelocity.set(66.314134814283);
+                c.naturalForwardDeceleration.set(31.954026140891106);
+                c.naturalStrafeDeceleration.set(54.60707909812526);
+            }
+    );
 
     public static Follower create(HardwareMap hardwareMap) {
         return new Follower(
