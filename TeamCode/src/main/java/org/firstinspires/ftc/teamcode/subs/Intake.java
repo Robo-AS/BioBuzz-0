@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class Intake extends SubsystemBase {
 
-    public static double INTAKE_POWER = 0.5;
+    public static double INTAKE_POWER = 0.8;
     public static double OUTTAKE_POWER = -1.0;
 
     private final DcMotorEx intakeMotor;
