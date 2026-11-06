@@ -26,6 +26,11 @@ public class Intake extends SubsystemBase {
         }
     }
 
+    /** Last power sent to the motor (0 if never set). */
+    public double getPower() {
+        return Double.isNaN(lastPower) ? 0.0 : lastPower;
+    }
+
     public void stop() {
         setPower(0);
     }
