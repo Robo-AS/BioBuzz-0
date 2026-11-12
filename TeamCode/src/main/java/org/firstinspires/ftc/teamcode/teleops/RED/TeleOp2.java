@@ -14,7 +14,7 @@ public class TeleOp2 extends BaseTeleOp {
 
     // Goal position (Pedro units, inches).
     // TODO check: y = 208 is outside the 144" field.
-    private static final double GOAL_X = 57;
+    private static final double GOAL_X = 58;
     private static final double GOAL_Y = 71;
 
     @Override protected Pose startPose() { return START; }
