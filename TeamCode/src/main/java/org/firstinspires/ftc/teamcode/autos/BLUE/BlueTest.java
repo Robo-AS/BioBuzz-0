@@ -23,7 +23,7 @@ import org.firstinspires.ftc.teamcode.subs.Intake;
  * Built as flat command sequences on purpose: FTCLib 2.1.1 breaks when a command group
  * is nested inside a parallel group (freezes or crashes), see StartParking.
  */
-@Autonomous(name = "BlueTest", group = "BLUE")
+@Autonomous(name = "BlueTest")
 public class BlueTest extends RobotOpMode {
 
     /** Intake power while driving pick1. */
@@ -43,10 +43,10 @@ public class BlueTest extends RobotOpMode {
     private final Pose start = poseFactory.of(87.9039, 131.6771, 270);
     private final Pose path1 = poseFactory.of(87.5101, 102.9589, 270);
     private final Pose point2Start = poseFactory.of(87.5101, 102.9589, 270);
-    private final Pose point2 = poseFactory.of(88.2352, 134.2903, 0);
-    private final Pose point3Start = poseFactory.of(88.2352, 134.2903, 0);
-    private final Pose point3 = poseFactory.of(132.4953, 134.8418, 0);
-    private final Pose point4Start = poseFactory.of(132.4953, 134.8418, 0);
+    private final Pose point2 = poseFactory.of(88.2352, 131.2903, 0);
+    private final Pose point3Start = poseFactory.of(88.2352, 131.2903, 0);
+    private final Pose point3 = poseFactory.of(132.4953, 131.8418, 0);
+    private final Pose point4Start = poseFactory.of(132.4953, 131.8418, 0);
     private final Pose point4 = poseFactory.of(87.5598, 102.5272, 270);
     private final Pose point5Start = poseFactory.of(87.5598, 102.5272, 270);
     private final Pose point5 = poseFactory.of(134.4092, 35.5908, 270);

@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.subs.IntakeServo;
 import org.firstinspires.ftc.teamcode.teleops.BaseTeleOp;
 
-@TeleOp(name = "TeleOp1", group = "Test")
+@TeleOp(name = "TeleOp1")
 public class TeleOp1 extends BaseTeleOp {
     private static final PoseFactory P = PoseFactory.degrees();
     private static final Pose START = P.of(132, 9, 90);

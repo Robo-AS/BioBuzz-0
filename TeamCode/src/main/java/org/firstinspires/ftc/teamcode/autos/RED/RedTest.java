@@ -23,7 +23,7 @@ import org.firstinspires.ftc.teamcode.subs.Intake;
  * Built as flat command sequences on purpose: FTCLib 2.1.1 breaks when a command group
  * is nested inside a parallel group (freezes or crashes), see StartParking.
  */
-@Autonomous(name = "RedTest", group = "RED")
+@Autonomous(name = "RedTest")
 public class RedTest extends RobotOpMode {
 
     /** Intake power while driving pick1. */

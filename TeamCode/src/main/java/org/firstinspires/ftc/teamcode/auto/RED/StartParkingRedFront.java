@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.auto.RED;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.pedropathing.follower.Follower;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
@@ -14,6 +15,7 @@ import static com.pedropathing.ivy.commands.Commands.waitMs;
 import static com.pedropathing.ivy.groups.Groups.sequential;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 @Autonomous(name = "🔴 Red Front", group = "🔴 Red")
+@Disabled
 public class StartParkingRedFront extends OpMode {
     private Follower follower;
     private final PoseFactory p = PoseFactory.degrees();

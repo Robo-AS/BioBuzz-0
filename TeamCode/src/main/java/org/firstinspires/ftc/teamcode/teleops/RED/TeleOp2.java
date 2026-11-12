@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.teleops.BaseTeleOp;
 
-@TeleOp(name = "TeleOp2", group = "Test")
+@TeleOp(name = "TeleOp2")
 public class TeleOp2 extends BaseTeleOp {
     private static final PoseFactory P = PoseFactory.degrees();
     // TODO check: same start pose as BLUE TeleOp1 — probably needs the real RED start spot.
