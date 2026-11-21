@@ -16,6 +16,7 @@ public class Intake extends SubsystemBase {
 
     public Intake(HardwareMap hardwareMap) {
         intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
+        intakeMotor.setDirection(DcMotorEx.Direction.REVERSE);
     }
 
     /** Only talks to the hub when the power actually changes (saves loop time). */
