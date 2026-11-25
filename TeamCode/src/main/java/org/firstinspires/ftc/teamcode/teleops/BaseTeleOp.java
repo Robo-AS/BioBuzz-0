@@ -58,16 +58,16 @@ public abstract class BaseTeleOp extends RobotOpMode {
         autoAim = new AutoAimDriveCommand(drive, driver);
         drive.setDefaultCommand(new FieldCentricDriveCommand(drive, driver));
 
-        new Trigger(() -> gamepad1.right_trigger > AIM_TRIGGER_THRESHOLD)
-                .whileActiveOnce(autoAim);
+        /*new Trigger(() -> gamepad1.right_trigger > AIM_TRIGGER_THRESHOLD)
+                .whileActiveOnce(autoAim);*/
 
         // No requirements, so pressing it while aiming doesn't cancel the aim.
         new Trigger(() -> gamepad1.options)
                 .whenActive(new InstantCommand(() -> drive.resetPose(startPose())));
 
         // ---- Intake ----
-        driver.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER).whenHeld(intake.intakeCommand());
-        driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).whenHeld(intake.outtakeCommand());
+       /* driver.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER).whenHeld(intake.intakeCommand());
+        driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).whenHeld(intake.outtakeCommand());*/
 
         configureBindings();
     }

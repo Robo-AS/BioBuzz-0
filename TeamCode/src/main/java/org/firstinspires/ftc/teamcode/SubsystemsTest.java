@@ -8,13 +8,13 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 public class SubsystemsTest extends OpMode {
     boolean intakeState=false;
     boolean feederState=false;
-    boolean launcherState=false;
-    private DcMotor Intake,Feeder,Launcher;
+    boolean flywheelState=false;
+    private DcMotor Intake,Feeder,flywheel;
     public void init()
     {
         Intake=hardwareMap.get(DcMotor.class, "intake");
         Feeder=hardwareMap.get(DcMotor.class,"feeder");
-        Launcher=hardwareMap.get(DcMotor.class,"launcher");
+        flywheel=hardwareMap.get(DcMotor.class,"flywheel");
     }
     public void loop()
     {
@@ -35,12 +35,12 @@ public class SubsystemsTest extends OpMode {
             Feeder.setPower(0);
         }
         if (gamepad1.yWasPressed()){
-            launcherState=!launcherState;
+            flywheelState=!flywheelState;
         }
-        if(launcherState)
-            Launcher.setPower(1);
+        if(flywheelState)
+            flywheel.setPower(1);
         else
-            Launcher.setPower(0);
+            flywheel.setPower(0);
 
     }
 

@@ -4,7 +4,6 @@ import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.pedropathing.math.Pose;
 
-import org.firstinspires.ftc.teamcode.drive.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subs.DriveSubsystem;
 
 /**
@@ -25,10 +24,7 @@ public class FieldCentricDriveCommand extends CommandBase {
 
     @Override
     public void initialize() {
-        MecanumDrive m = drive.mecanum();
-        m.setDriveVelocityMode(true);
-        m.resetFreeRoamProfile();
-        m.resetAim();
+        drive.mecanum().resetAim();
         drive.headingHold().reset();
     }
 
@@ -36,6 +32,6 @@ public class FieldCentricDriveCommand extends CommandBase {
     public void execute() {
         Pose pose = drive.pose();
         double turn = drive.headingHold().update(-driver.getRightX(), pose.heading(), drive.mecanum());
-        drive.mecanum().fieldCentricVelocity(driver, pose.heading(), turn);
+        drive.mecanum().fieldCentric(driver, pose.heading(), turn);
     }
 }

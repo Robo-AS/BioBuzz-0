@@ -32,6 +32,7 @@ public class ServoTuner extends LinearOpMode {
     @Override
     public void runOpMode() {
         Servo servo = hardwareMap.get(Servo.class, "servo_intake");
+        Servo blocker=hardwareMap.get(Servo.class,"servo_blocker");
         DcMotorEx intake = hardwareMap.get(DcMotorEx.class, "intake");
         boolean intakeOn = false, lastB = false;
         double position = POSITION_A;
@@ -55,6 +56,10 @@ public class ServoTuner extends LinearOpMode {
             lastDown = down;
 
             servo.setPosition(position);
+            if(gamepad1.left_bumper)
+                blocker.setPosition(0.0);
+            if(gamepad1.right_bumper)
+                blocker.setPosition(0.4);
 
             boolean b = gamepad1.b;
             if (b && !lastB) intakeOn = !intakeOn;
