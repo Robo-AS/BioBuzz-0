@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.config.ValueProvider;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
+import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.pedropathing.api.PoseFactory;
 import com.pedropathing.math.Pose;
@@ -12,6 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.teamcode.subs.BlockerServo;
 import org.firstinspires.ftc.teamcode.subs.FlywheelPIDF;
 import org.firstinspires.ftc.teamcode.subs.HoodServo;
 import org.firstinspires.ftc.teamcode.subs.ShooterSubsystem;
@@ -34,9 +36,12 @@ import java.util.function.Supplier;
  *   Graph: "Target RPM", "Actual RPM", "Distance".
  *
  * gamepad1 (on top of the BaseTeleOp buttons):
+ *   R2 (hold)      TRANSFER = shoot, exactly like TeleOp1's R2: blocker open, intake servo B,
+ *                  feeder ON, intake ON. Release: blocker closed, intake servo A, feeder + intake OFF.
+ *                  (Dashboard: tick "transferOn" + Save = same thing, untick to stop.)
  *   Y              flywheel on / off
- *   LB             feeder on / off  (shoot)
- *   B              intake on / off
+ *   LB             feeder on / off (alone)
+ *   B              intake on / off (alone)
  *   dpad up/down   target RPM +50 / -50       (manual mode)
  *   L3 / R3        hood -0.02 / +0.02         (stick clicks, manual mode)
  *   back / share   switch MANUAL <-> TABLE    (TABLE = RPM + hood from ShotTable by distance)
@@ -64,9 +69,12 @@ public class ShooterTuner extends BaseTeleOp {
     private static volatile boolean useTable = false;
     private static volatile double targetRpm = 2000;
     private static volatile double hoodPos = 0.0;
+    private static volatile boolean transferOn = false;
+    private boolean transferApplied = false;
 
     private ShooterSubsystem shooter;
     private HoodServo hood;
+    private BlockerServo blocker;
     private DcMotorEx flywheel;
     private VoltageSensor battery;
     private final FlywheelPIDF pidf = new FlywheelPIDF();
@@ -79,6 +87,8 @@ public class ShooterTuner extends BaseTeleOp {
     protected void configureBindings() {
         shooter = new ShooterSubsystem(hardwareMap);   // feeder (and it grabs the flywheel motor)
         hood = new HoodServo(hardwareMap);
+        blocker = new BlockerServo(hardwareMap);
+        blocker.blocked();
         flywheel = hardwareMap.get(DcMotorEx.class, ShooterSubsystem.FLYWHEEL_NAME);
         // ShooterSubsystem sets RUN_USING_ENCODER (hub speed control). We run our own PIDF -> switch back.
         flywheel.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
@@ -88,7 +98,14 @@ public class ShooterTuner extends BaseTeleOp {
 
         flywheelOn = false;
         useTable = false;
+        transferOn = false;
+        transferApplied = false;
         hoodPos = hood.getPosition();
+
+        // R2 held = transfer (shoot). Same threshold as the other TeleOps.
+        new Trigger(() -> driver.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > AIM_TRIGGER_THRESHOLD)
+                .whenActive(new InstantCommand(() -> transferOn = true))
+                .whenInactive(new InstantCommand(() -> transferOn = false));
 
         driver.getGamepadButton(GamepadKeys.Button.Y)
                 .whenPressed(new InstantCommand(() -> { flywheelOn = !flywheelOn; pidf.reset(); }));
@@ -118,7 +135,24 @@ public class ShooterTuner extends BaseTeleOp {
         schedule(new RunCommand(this::updateShooter)); // runs every loop
     }
 
+    /** TeleOp1's R2 sequence: open blocker, intake servo to B, feeder + intake on (and the reverse). */
+    private void applyTransfer(boolean on) {
+        if (on) {
+            blocker.notblocked();
+            intakeServo.toB();
+            shooter.setFeeder(true);
+            intake.setPower(1);
+        } else {
+            blocker.blocked();
+            intakeServo.toA();
+            shooter.setFeeder(false);
+            intake.stop();
+        }
+        transferApplied = on;
+    }
+
     private void updateShooter() {
+        if (transferOn != transferApplied) applyTransfer(transferOn); // from R2 or the Dashboard
         Pose pose = drive.pose();
         distance = ShotTable.distance(pose.x(), pose.y(),
                 drive.mecanum().getGoalX(), drive.mecanum().getGoalY());
@@ -152,6 +186,7 @@ public class ShooterTuner extends BaseTeleOp {
         telemetry.addData("Flywheel", "%s  target %.0f  actual %.0f RPM  power %.2f",
                 flywheelOn ? "ON" : "OFF", targetRpm, actualRpm, power);
         telemetry.addData("Hood", "%.3f", hoodPos);
+        telemetry.addData("Transfer (R2)", transferOn ? "ON — blocker open, feeder + intake running" : "OFF");
         telemetry.addData("PIDF", "P %.5f  I %.5f  D %.5f  F %.6f",
                 FlywheelPIDF.kP, FlywheelPIDF.kI, FlywheelPIDF.kD, FlywheelPIDF.kF);
         telemetry.addData("Battery", "%.2f V", voltage);
@@ -183,6 +218,7 @@ public class ShooterTuner extends BaseTeleOp {
         FtcDashboard dash = FtcDashboard.getInstance();
         addVar(dash, "flywheelOn", () -> flywheelOn, v -> { flywheelOn = v; pidf.reset(); });
         addVar(dash, "useTable", () -> useTable, v -> useTable = v);
+        addVar(dash, "transferOn", () -> transferOn, v -> transferOn = v);
         addVar(dash, "targetRpm", () -> targetRpm, v -> targetRpm = Math.max(0, v));
         addVar(dash, "hood", () -> hoodPos, v -> hoodPos = Math.max(0, Math.min(0.5, v)));
         addVar(dash, "kP", () -> FlywheelPIDF.kP, v -> FlywheelPIDF.kP = Math.max(0, v));
