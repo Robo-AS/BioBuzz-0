@@ -11,19 +11,22 @@ import org.firstinspires.ftc.teamcode.RobotOpMode;
 import org.firstinspires.ftc.teamcode.commands.AutoAimDriveCommand;
 import org.firstinspires.ftc.teamcode.commands.FieldCentricDriveCommand;
 import org.firstinspires.ftc.teamcode.subs.DriveSubsystem;
+import org.firstinspires.ftc.teamcode.subs.FarasSubsystem;
 import org.firstinspires.ftc.teamcode.subs.FollowerSubsystem;
 import org.firstinspires.ftc.teamcode.subs.Intake;
+import org.firstinspires.ftc.teamcode.subs.IntakeServo;
 
 /**
  * Shared competition TeleOp. Each alliance TeleOp only supplies a start pose and a goal.
  *
- * gamepad1:
- *   left stick      field-centric translation
- *   right stick X   turn (heading hold when released)
- *   right trigger   hold for auto aim
- *   right bumper    hold to intake
- *   left bumper     hold to outtake
- *   options         re-zero pose to the start spot
+ * gamepad1 (defaults for ALL TeleOps):
+ *   left stick         field-centric translation
+ *   right stick X      turn (heading hold when released)
+ *   X                  auto aim on / off (back to the goal)
+ *   dpad left / right  goal X -3 / +3 (auto aim trim)
+ *   right bumper (R1)  faras UP <-> DOWN
+ *   options            re-zero pose to the start spot
+ * Each TeleOp adds its own mechanism buttons in configureBindings().
  */
 public abstract class BaseTeleOp extends RobotOpMode {
 
@@ -33,6 +36,11 @@ public abstract class BaseTeleOp extends RobotOpMode {
     protected FollowerSubsystem follower;
     protected DriveSubsystem drive;
     protected Intake intake;
+    protected FarasSubsystem faras;
+    protected IntakeServo intakeServo;
+
+    /** Which IntakeServo position is DOWN (B = 0.9). Set false if DOWN is actually A (0.21). */
+    public static boolean INTAKE_DOWN_IS_B = true;
     protected GamepadEx driver;
     protected AutoAimDriveCommand autoAim;
 
@@ -63,6 +71,8 @@ public abstract class BaseTeleOp extends RobotOpMode {
         drive.setGoal(goalX(), goalY());
 
         intake = new Intake(hardwareMap);
+        faras = new FarasSubsystem(hardwareMap); // must be UP at START; holds UP after START
+        intakeServo = new IntakeServo(hardwareMap);
         driver = new GamepadEx(gamepad1);
 
         // ---- Drive ----
@@ -80,7 +90,40 @@ public abstract class BaseTeleOp extends RobotOpMode {
        /* driver.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER).whenHeld(intake.intakeCommand());
         driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).whenHeld(intake.outtakeCommand());*/
 
+        // ---- Auto aim: X = on / off (robot turns its back to the goal, driver keeps translation) ----
+        driver.getGamepadButton(GamepadKeys.Button.X)
+                .toggleWhenPressed(autoAim);
+
+        // ---- Goal X trim: D-pad left = goal X - 3, D-pad right = goal X + 3 ----
+        driver.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+                .whenPressed(new InstantCommand(() ->
+                        drive.setGoal(drive.mecanum().getGoalX() - 3, drive.mecanum().getGoalY())));
+        driver.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+                .whenPressed(new InstantCommand(() ->
+                        drive.setGoal(drive.mecanum().getGoalX() + 3, drive.mecanum().getGoalY())));
+
+        // ---- R1: faras + intake servo DOWN and intake motor ON together;
+        //      R1 again: faras + intake servo UP and intake motor OFF together ----
+        driver.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .whenPressed(new InstantCommand(() -> {
+                    faras.toggle();
+                    boolean down = faras.isDown();
+                    setIntakeServoDown(down);
+                    if (down) intake.setPower(Intake.INTAKE_POWER); else intake.stop();
+                }, faras, intakeServo, intake));
+
         configureBindings();
+    }
+
+    /** Intake servo DOWN or UP (uses INTAKE_DOWN_IS_B to know which position is down). */
+    protected void setIntakeServoDown(boolean down) {
+        if (down == INTAKE_DOWN_IS_B) intakeServo.toB(); else intakeServo.toA();
+    }
+
+    /** At START: intake servo UP (like the faras, which starts UP). TeleOps may override. */
+    @Override
+    protected void onStart() {
+        setIntakeServoDown(false);
     }
 
     @Override
@@ -95,6 +138,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
             telemetry.addData("Hold error (deg)", Math.toDegrees(drive.headingHold().lastError()));
         }
         drive.mecanum().aimTelemetry(telemetry, pose.x(), pose.y(), pose.heading());
+        faras.telemetry(telemetry);
 
         if (DEBUG_TELEMETRY) telemetry.addData("Follower mode", follower.follower().mode());
         if (showMotorDebugTelemetry()) drive.motorTelemetry(telemetry);

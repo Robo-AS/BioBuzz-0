@@ -15,7 +15,6 @@ import org.firstinspires.ftc.teamcode.commands.FollowPathCommand;
 import org.firstinspires.ftc.teamcode.subs.FollowerSubsystem;
 import org.firstinspires.ftc.teamcode.subs.Intake;
 import org.firstinspires.ftc.teamcode.subs.ShooterSubsystem;
-import org.firstinspires.ftc.teamcode.subs.SweeperSubsystem;
 
 @Autonomous(name = "🔴 Red Front - Full Auto", group = "🔴 Red")
 public class RedFront extends RobotOpMode {
@@ -23,10 +22,6 @@ public class RedFront extends RobotOpMode {
     public static double INTAKE_POWER = 0.75;
     public static double DRIVE_SPEED = 0.7;
 
-    // Setări pentru Sweeper (CRServo)
-    public static double SWEEPER_DOWN_POWER = 0.8;
-    public static double SWEEPER_UP_POWER = -0.8;
-    public static long SWEEPER_TIME_MS = 350; // Ajustează acest timp la teste!
 
     // Timpi de așteptare
     public static long SPINUP_WAIT_MS = 300;
@@ -37,7 +32,6 @@ public class RedFront extends RobotOpMode {
     private FollowerSubsystem follower;
     private Intake intake;
     private ShooterSubsystem shooter;
-    private SweeperSubsystem sweeper;
     private String step = "waiting for START";
 
     private final PoseFactory poseFactory = PoseFactory.degrees();
@@ -122,12 +116,10 @@ public class RedFront extends RobotOpMode {
                 new InstantCommand(() -> intake.setPower(INTAKE_POWER), intake),
                 follow(enterFlower()),
 
-                // 2. Coboară sweeper-ul și oprește CRServo-ul după un timp scurt
-
                 // 3. Așteaptă ca intake-ul să tragă mingile din floare
                 new WaitCommand(FLOWER_WAIT_MS),
 
-                // 4. Ridică sweeper-ul la loc și oprește tot
+                // 4. Oprește intake-ul
                 new InstantCommand(intake::stop, intake)
         );
     }
@@ -139,7 +131,7 @@ public class RedFront extends RobotOpMode {
                 step("3 pick + intake", pickWithIntake(goToPick(), PICK_WAIT_MS)),
                 step("4 shoot2", driveAndShoot(shoot2())),
                 step("5 align flower", follow(alignFlower())),
-                step("6 collect flower + sweeper", collectFromFlower()),
+                step("6 collect flower", collectFromFlower()),
                 step("7 shoot3", driveAndShoot(shoot3())),
                 step("8 clear", follow(clearShooting())),
                 step("9 park", follow(park())),
@@ -159,7 +151,6 @@ public class RedFront extends RobotOpMode {
         follower.setPose(startPose);
         intake = new Intake(hardwareMap);
         shooter = new ShooterSubsystem(hardwareMap);
-        sweeper = new SweeperSubsystem(hardwareMap);
         follower.periodic();
     }
 

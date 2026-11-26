@@ -15,7 +15,6 @@ import org.firstinspires.ftc.teamcode.subs.HoodServo;
 import org.firstinspires.ftc.teamcode.subs.IntakeServo;
 import org.firstinspires.ftc.teamcode.subs.LedSubsystem;
 import org.firstinspires.ftc.teamcode.subs.ShooterSubsystem;
-import org.firstinspires.ftc.teamcode.subs.SweeperSubsystem;
 import org.firstinspires.ftc.teamcode.teleops.BaseTeleOp;
 
 @TeleOp(name = "TeleOp1")
@@ -23,19 +22,13 @@ public class TeleOp1 extends BaseTeleOp {
     private static final PoseFactory P = PoseFactory.degrees();
     private static final Pose START = P.of(132, 9, 90);
 
-    private static final double GOAL_X = 80;
+    private static final double GOAL_X = 77;
     private static final double GOAL_Y = 71;
-    public static double SWEEPER_UP_POWER = -0.8;   // Dacă coboară în loc să ridice, schimbă în 0.8
-    public static double SWEEPER_DOWN_POWER = 0.8;  // Opțional, dacă vrei să-l și cobori
-    public static long SWEEPER_STEP_MS = 750;
-    public static long SWEEPER_WAIT_MS =750;
 
 
-    private IntakeServo intakeServo;
     private ShooterSubsystem shooterSubsystem;
     private BlockerServo blockerServo;
     private LedSubsystem leds;
-    private SweeperSubsystem sweeper;
     private HoodServo hood;
 
     @Override protected Pose startPose() { return START; }
@@ -49,14 +42,12 @@ public class TeleOp1 extends BaseTeleOp {
         shooterSubsystem = new ShooterSubsystem(hardwareMap);
         blockerServo = new BlockerServo(hardwareMap);
         blockerServo.blocked();
-        sweeper = new SweeperSubsystem(hardwareMap);
         hood= new HoodServo(hardwareMap);
         leds.setColor(LedSubsystem.GREEN);
         // INTAKE SI SERVO
         driver.getGamepadButton(GamepadKeys.Button.B)
                 .toggleWhenPressed(intake.intakeCommand());
 
-        intakeServo = new IntakeServo(hardwareMap);
         driver.getGamepadButton(GamepadKeys.Button.A)
                 .whenPressed(intakeServo.toggleCommand());
         //R2
@@ -98,13 +89,7 @@ public class TeleOp1 extends BaseTeleOp {
                         new InstantCommand(blockerServo::blocked, blockerServo),
                         new InstantCommand(() -> shooterSubsystem.setFeeder(false), shooterSubsystem)
                 ));
-        //R1
-        driver.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-                .toggleWhenPressed(
-                        sweeper.goDownCommand(SWEEPER_STEP_MS),
-                        sweeper.goBackCommand(SWEEPER_STEP_MS)
-
-                );
+        // R1 = faras, bound in BaseTeleOp.
         // --- FEEDER ȘI FLYWHEEL ---
 
 
@@ -122,24 +107,8 @@ public class TeleOp1 extends BaseTeleOp {
 
         driver.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new InstantCommand(blockerServo::notblocked, blockerServo));
-        //SWEEPER
 
-        /*driver.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(new SequentialCommandGroup(
-                        new InstantCommand(() -> sweeper.godown(), sweeper),
-                        new WaitCommand(SWEEPER_STEP_MS),
-                        new InstantCommand(sweeper::stop, sweeper),
-                        new WaitCommand(SWEEPER_WAIT_MS),
-                        new InstantCommand(sweeper::goback, sweeper),
-                        new WaitCommand(SWEEPER_STEP_MS),
-                        new InstantCommand(sweeper::stop, sweeper)
-
-                ));*/
-
-        driver.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(new InstantCommand(hood::increment,hood));
-        driver.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
-                .whenPressed(new InstantCommand(hood::decrement,hood));
+        // Goal X trim (D-pad left/right) and auto aim (X) are in BaseTeleOp now (default for all TeleOps).
         if (autoAim.isScheduled()) {
             leds.setColor(LedSubsystem.VIOLET);
         }

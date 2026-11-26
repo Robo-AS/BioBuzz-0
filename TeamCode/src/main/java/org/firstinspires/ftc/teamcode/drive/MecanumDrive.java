@@ -26,7 +26,7 @@ public class MecanumDrive {
     public static double AIM_KS = 0.06;             // minimum power to overcome friction
     public static double AIM_MAX_POWER = 0.8;
     public static double AIM_TOLERANCE_RAD = Math.toRadians(1.0);
-    public static double AIM_TURN_SIGN = -1.0;      // flip to +1.0 if it turns AWAY from the goal
+    public static double AIM_TURN_SIGN = 1.0;       // +1 = correct for this drivetrain. -1 makes auto aim AND heading hold turn away and shake
     public static double SHOOTER_HEADING_OFFSET_RAD = Math.toRadians(180); // aim with the robot's BACK (value is in radians!)
 
     private double goalX = 0, goalY = 0;
@@ -192,6 +192,9 @@ public class MecanumDrive {
     }
 
     // ---------------- Auto aim ----------------
+    public double getGoalX() { return goalX; }
+    public double getGoalY() { return goalY; }
+
     public void setGoal(double x, double y) {
         goalX = x;
         goalY = y;
