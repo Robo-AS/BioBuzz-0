@@ -28,6 +28,12 @@ public class HoodServo extends SubsystemBase {
         servo.setPosition(currentPosition);
     }
 
+    /** Go straight to a position (clipped to MIN_POS..MAX_POS). */
+    public void setPosition(double position) {
+        currentPosition = Math.max(MIN_POS, Math.min(MAX_POS, position));
+        servo.setPosition(currentPosition);
+    }
+
     public double getPosition() {
         return currentPosition;
     }
