@@ -10,6 +10,15 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import com.arcrobotics.ftclib.command.Command;
+import com.arcrobotics.ftclib.command.CommandScheduler;
+import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+
+import org.firstinspires.ftc.teamcode.subs.Intake;
+import org.firstinspires.ftc.teamcode.subs.ShooterSubsystem;
+
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -19,7 +28,8 @@ import java.util.function.Supplier;
  *
  * FTC Dashboard: connect to the robot Wi-Fi, open http://192.168.43.1:8080/dash
  *   Graph panel: tick "Target RPM" and "Actual RPM" (and "Error RPM", "Power x1000").
- *   Config panel -> "Flywheel Tuner": edit flywheelOn/kP/kI/kD/kF/targetRpm live, then press Save.
+ *   Config panel -> "Flywheel Tuner": edit flywheelOn/intakeOn/feederOn/kP/kI/kD/kF/targetRpm live,
+ *   then press Save.
  *   (Only appears while this OpMode is INIT/running. Press the ↻ refresh icon if it doesn't show.)
  *
  * Controls (gamepad1, one step per press) — they change the SAME values as the Dashboard:
@@ -28,7 +38,11 @@ import java.util.function.Supplier;
  *   dpad left/right select gain (P, I, D, F)
  *   right bumper    selected gain + step
  *   left bumper     selected gain - step
- *   Y / X           step size x10 / ÷10
+ *   B               intake on / off   EXACTLY TeleOp1: Intake subsystem, toggleWhenPressed(intakeCommand())
+ *   X               feeder on / off   EXACTLY TeleOp1: ShooterSubsystem.toggleFeeder()
+ *   Dashboard Config: tick/untick intakeOn or feederOn and press Save = same as pressing B / X.
+ *   right stick btn step size x10
+ *   left stick btn  step size ÷10
  *
  * Why PIDF on a flywheel:
  *   F (feedforward) does most of the work: power needed is roughly proportional to speed,
@@ -45,7 +59,8 @@ import java.util.function.Supplier;
 public class FlywheelTuner extends LinearOpMode {
 
     // ---- Hardware (change to match your Robot Configuration) ----
-    private static final String MOTOR_NAME = "flywheel";
+    // The flywheel motor is "launcher" (the same motor ShooterSubsystem uses). Only this one is driven here.
+    private static final String MOTOR_NAME = "launcher";
     private static final boolean REVERSED = false;
     /**
      * Encoder ticks per motor revolution. The Robot Configuration has the flywheel set to a
@@ -64,6 +79,9 @@ public class FlywheelTuner extends LinearOpMode {
     /** Flywheel on/off. Tick it in the Dashboard Config tab, or press A on gamepad1. */
     public static volatile boolean flywheelOn = false;
     public static volatile double targetRpm = 2000;
+    /** Intake / feeder on/off, same behavior as TeleOp1 (B / X). */
+    public static volatile boolean intakeOn = false;
+    public static volatile boolean feederOn = false;
     public static volatile double kP = 0.0005;
     public static volatile double kI = 0.0;
     public static volatile double kD = 0.0;
@@ -71,6 +89,7 @@ public class FlywheelTuner extends LinearOpMode {
     public static volatile double kF = 0.0;
 
     private static final double RPM_STEP = 20;
+
     private static final double NOMINAL_VOLTAGE = 12.0;
     private static final double MAX_INTEGRAL_POWER = 0.2; // anti-windup: I term limited to +/-0.2 power
 
@@ -87,7 +106,7 @@ public class FlywheelTuner extends LinearOpMode {
     }
 
     private static final String CATEGORY = "Flywheel Tuner";
-    private static final String[] CONFIG_NAMES = {"flywheelOn", "targetRpm", "kP", "kI", "kD", "kF"};
+    private static final String[] CONFIG_NAMES = {"flywheelOn", "intakeOn", "feederOn", "targetRpm", "kP", "kI", "kD", "kF"};
 
     private static <T> void addVar(FtcDashboard dashboard, String name, Supplier<T> get, Consumer<T> set) {
         dashboard.addConfigVariable(CATEGORY, name, new ValueProvider<T>() {
@@ -99,6 +118,8 @@ public class FlywheelTuner extends LinearOpMode {
     /** Put this OpMode's live variables into the Dashboard Config panel. */
     private void registerConfig(FtcDashboard dashboard) {
         addVar(dashboard, "flywheelOn", () -> flywheelOn, v -> flywheelOn = v);
+        addVar(dashboard, "intakeOn", () -> intakeOn, v -> intakeOn = v);
+        addVar(dashboard, "feederOn", () -> feederOn, v -> feederOn = v);
         addVar(dashboard, "targetRpm", () -> targetRpm, v -> targetRpm = Math.max(0, v));
         addVar(dashboard, "kP", () -> kP, v -> kP = Math.max(0, v));
         addVar(dashboard, "kI", () -> kI, v -> kI = Math.max(0, v));
@@ -127,6 +148,16 @@ public class FlywheelTuner extends LinearOpMode {
         flywheel.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER); // our own PIDF, encoder still counts
         flywheel.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT); // coast down, don't brake
 
+        // ---- Intake + feeder: the SAME subsystems and bindings as TeleOp1 ----
+        CommandScheduler.getInstance().reset();
+        Intake intake = new Intake(hardwareMap);
+        ShooterSubsystem shooter = new ShooterSubsystem(hardwareMap);
+        GamepadEx driver = new GamepadEx(gamepad1);
+        Command intakeToggle = intake.intakeCommand();
+        driver.getGamepadButton(GamepadKeys.Button.B).toggleWhenPressed(intakeToggle);
+        driver.getGamepadButton(GamepadKeys.Button.X)
+                .whenPressed(new InstantCommand(shooter::toggleFeeder, shooter));
+
         VoltageSensor battery = hardwareMap.voltageSensor.iterator().next();
 
         String motorTypeName = flywheel.getMotorType().getName();
@@ -136,12 +167,15 @@ public class FlywheelTuner extends LinearOpMode {
         double autoKF = 1.0 / maxRpm; // used whenever kF is 0: full power at the motor's free speed
 
         flywheelOn = false; // always start stopped
+        intakeOn = false;
+        feederOn = false;
         registerConfig(dashboard);
         boolean wasOn = false;
         int selected = 0;
 
         boolean lastA = false, lastUp = false, lastDown = false, lastLeft = false, lastRight = false;
-        boolean lastRb = false, lastLb = false, lastX = false, lastY = false;
+        boolean lastRb = false, lastLb = false, lastL3 = false, lastR3 = false;
+        boolean lastIntakeOn = false, lastFeederOn = false;
 
         double integral = 0, lastRpm = 0, voltage = battery.getVoltage();
         long lastNs = 0, lastVoltageNs = 0;
@@ -164,7 +198,7 @@ public class FlywheelTuner extends LinearOpMode {
             }
 
             // ---------------- Buttons (edge detected) ----------------
-            String before = flywheelOn + "|" + targetRpm + "|" + kP + "|" + kI + "|" + kD + "|" + kF;
+            String before = flywheelOn + "|" + intakeOn + "|" + feederOn + "|" + targetRpm + "|" + kP + "|" + kI + "|" + kD + "|" + kF;
             if (gamepad1.a && !lastA) flywheelOn = !flywheelOn;
             boolean on = flywheelOn;
             if (on != wasOn) integral = 0; // fresh start every time it's switched on/off
@@ -175,16 +209,30 @@ public class FlywheelTuner extends LinearOpMode {
             if (gamepad1.dpad_left && !lastLeft) selected = (selected + 3) % 4;
             if (gamepad1.right_bumper && !lastRb) setGain(selected, getGain(selected) + steps[selected]);
             if (gamepad1.left_bumper && !lastLb) setGain(selected, getGain(selected) - steps[selected]);
-            if (gamepad1.y && !lastY) steps[selected] *= 10;
-            if (gamepad1.x && !lastX) steps[selected] /= 10;
+            if (gamepad1.right_stick_button && !lastR3) steps[selected] *= 10;
+            if (gamepad1.left_stick_button && !lastL3) steps[selected] /= 10;
 
             lastA = gamepad1.a; lastUp = gamepad1.dpad_up; lastDown = gamepad1.dpad_down;
             lastLeft = gamepad1.dpad_left; lastRight = gamepad1.dpad_right;
             lastRb = gamepad1.right_bumper; lastLb = gamepad1.left_bumper;
-            lastX = gamepad1.x; lastY = gamepad1.y;
+            lastL3 = gamepad1.left_stick_button; lastR3 = gamepad1.right_stick_button;
+
+            // ---------------- Intake + feeder ----------------
+            // 1. Dashboard toggled one? -> do exactly what pressing B / X does.
+            if (intakeOn != lastIntakeOn && intakeOn != intakeToggle.isScheduled()) {
+                if (intakeOn) intakeToggle.schedule(); else intakeToggle.cancel();
+            }
+            if (feederOn != lastFeederOn && feederOn != shooter.isFeederOn()) shooter.toggleFeeder();
+            // 2. Run TeleOp1's bindings (B / X) and commands.
+            CommandScheduler.getInstance().run();
+            // 3. The real state is what the subsystems say (covers gamepad presses too).
+            intakeOn = intakeToggle.isScheduled();
+            feederOn = shooter.isFeederOn();
+            lastIntakeOn = intakeOn;
+            lastFeederOn = feederOn;
 
             // Gamepad changed a value -> show it in the Dashboard Config panel too.
-            String after = flywheelOn + "|" + targetRpm + "|" + kP + "|" + kI + "|" + kD + "|" + kF;
+            String after = flywheelOn + "|" + intakeOn + "|" + feederOn + "|" + targetRpm + "|" + kP + "|" + kI + "|" + kD + "|" + kF;
             if (!after.equals(before)) dashboard.updateConfig();
 
             // ---------------- PIDF ----------------
@@ -216,12 +264,14 @@ public class FlywheelTuner extends LinearOpMode {
             lastRpm = rpm;
             flywheel.setPower(power);
 
+
             // ---------------- FTC Dashboard graph (numbers only) ----------------
             TelemetryPacket packet = new TelemetryPacket();
             packet.put("Target RPM", on ? targetRpm : 0);
             packet.put("Actual RPM", rpm);
             packet.put("Error RPM", on ? error : 0);
             packet.put("Power x1000", power * 1000); // scaled so it fits on the same graph
+            packet.put("Feeder ON (500)", feederOn ? 500 : 0); // marks when balls are being fed in
             dashboard.sendTelemetryPacket(packet);
 
             // ---------------- Driver Station telemetry ----------------
@@ -231,6 +281,8 @@ public class FlywheelTuner extends LinearOpMode {
             telemetry.addData("Error RPM", "%.0f", error);
             telemetry.addData("Power", "%.3f", power);
             telemetry.addData("Battery", "%.2f V", voltage);
+            telemetry.addData("Intake (B)", intakeOn ? "ON" : "OFF");
+            telemetry.addData("Feeder (X)", feederOn ? "ON" : "OFF");
             telemetry.addLine();
             for (int i = 0; i < 4; i++) {
                 telemetry.addData((i == selected ? ">> " : "   ") + gainNames[i],
@@ -249,6 +301,11 @@ public class FlywheelTuner extends LinearOpMode {
         }
 
         flywheel.setPower(0);
+        intakeToggle.cancel();                       // stops the intake (its command's end)
+        if (shooter.isFeederOn()) shooter.toggleFeeder(); // stops the feeder
+        CommandScheduler.getInstance().reset();
         unregisterConfig(dashboard);
+        intakeOn = false;
+        feederOn = false;
     }
 }

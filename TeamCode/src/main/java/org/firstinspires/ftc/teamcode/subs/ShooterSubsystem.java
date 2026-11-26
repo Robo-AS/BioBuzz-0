@@ -22,6 +22,10 @@ public class ShooterSubsystem extends SubsystemBase {
         feeder.setPower(feederOn ? 1.0 : 0.0);
     }
 
+    public boolean isFeederOn() {
+        return feederOn;
+    }
+
     public void toggleLauncher() {
         launcherOn = !launcherOn;
         launcher.setPower(launcherOn ? 0.85 : 0.0);

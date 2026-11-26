@@ -27,7 +27,7 @@ public class MecanumDrive {
     public static double AIM_MAX_POWER = 0.8;
     public static double AIM_TOLERANCE_RAD = Math.toRadians(1.0);
     public static double AIM_TURN_SIGN = 1.0;      // flip to +1.0 if it turns AWAY from the goal
-    public static double SHOOTER_HEADING_OFFSET_RAD = 0.0; // if shooter isn't on the robot's front
+    public static double SHOOTER_HEADING_OFFSET_RAD = Math.toRadians(180); // aim with the robot's BACK (value is in radians!)
 
     private double goalX = 0, goalY = 0;
     private double lastAimError = 0;

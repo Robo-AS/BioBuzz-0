@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.teleops;
 
+import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
@@ -42,6 +43,16 @@ public abstract class BaseTeleOp extends RobotOpMode {
     /** Override to add bindings for new mechanisms. */
     protected void configureBindings() {}
 
+    /** Free-roam drive command (default). Override to use a different drive style. */
+    protected Command createDefaultDriveCommand() {
+        return new FieldCentricDriveCommand(drive, driver);
+    }
+
+    /** Show the motor mode/velocity debug lines (velocity comes from the motor encoders). */
+    protected boolean showMotorDebugTelemetry() {
+        return DEBUG_TELEMETRY;
+    }
+
     @Override
     protected void initRobot() {
         // Order matters: follower first, then drive (so MecanumDrive's motor directions win).
@@ -56,7 +67,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
 
         // ---- Drive ----
         autoAim = new AutoAimDriveCommand(drive, driver);
-        drive.setDefaultCommand(new FieldCentricDriveCommand(drive, driver));
+        drive.setDefaultCommand(createDefaultDriveCommand());
 
         new Trigger(() -> gamepad1.right_trigger > AIM_TRIGGER_THRESHOLD)
                 .whileActiveOnce(autoAim);
@@ -85,9 +96,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
         }
         drive.mecanum().aimTelemetry(telemetry, pose.x(), pose.y(), pose.heading());
 
-        if (DEBUG_TELEMETRY) {
-            telemetry.addData("Follower mode", follower.follower().mode());
-            drive.motorTelemetry(telemetry);
-        }
+        if (DEBUG_TELEMETRY) telemetry.addData("Follower mode", follower.follower().mode());
+        if (showMotorDebugTelemetry()) drive.motorTelemetry(telemetry);
     }
 }

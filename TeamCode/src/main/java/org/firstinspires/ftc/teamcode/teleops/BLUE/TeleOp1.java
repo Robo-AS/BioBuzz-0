@@ -15,7 +15,7 @@ public class TeleOp1 extends BaseTeleOp {
     private static final PoseFactory P = PoseFactory.degrees();
     private static final Pose START = P.of(132, 9, 90);
 
-    private static final double GOAL_X = 84;
+    private static final double GOAL_X = 80;
     private static final double GOAL_Y = 71;
 
     private IntakeServo intakeServo;
