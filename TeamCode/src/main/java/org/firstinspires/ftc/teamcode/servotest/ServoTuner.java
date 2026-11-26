@@ -20,6 +20,7 @@ import com.qualcomm.robotcore.hardware.ServoImplEx;
  *   A            powered: go to the other angle, 56° <-> 360° (first press goes to 360°)
  *   dpad up/down manual power +/- 0.1 (cancels the target; press A to go back to targets)
  *   B            intake motor on (full speed) / off
+ *   LB / RB      blocker servo 0.0 / 0.4
  *
  * Angles are measured from where the servo is at START (that spot = 56°), counted continuously
  * from the feedback wire, so 56 -> 360 is always exactly +304° of rotation, no wrap-around.
@@ -52,6 +53,7 @@ public class ServoTuner extends LinearOpMode {
         Servo servo = crServo == null ? hardwareMap.get(Servo.class, SERVO_NAME) : null;
         AnalogInput feedback = hardwareMap.tryGet(AnalogInput.class, FEEDBACK_NAME);
         DcMotorEx intake = hardwareMap.get(DcMotorEx.class, "intake");
+        Servo blocker = hardwareMap.get(Servo.class, "servo_blocker"); // teammate's blocker test
 
         boolean atB = false;            // false = target ANGLE_A, true = target ANGLE_B
         boolean goToTarget = false;
@@ -136,6 +138,8 @@ public class ServoTuner extends LinearOpMode {
                 else servo.setPosition(0.5 + power / 2.0); // plain-Servo config: 0.5 = stop
             }
             intake.setPower(intakeOn ? INTAKE_POWER : 0.0);
+            if (gamepad1.left_bumper) blocker.setPosition(0.0);   // blocker test (teammate)
+            if (gamepad1.right_bumper) blocker.setPosition(0.4);
 
             // ---------------- Telemetry ----------------
             telemetry.addData("Mode", handMode ? "HAND — no power, turn it by hand (A = go to target, Y = power on)"

@@ -59,8 +59,8 @@ import java.util.function.Supplier;
 public class FlywheelTuner extends LinearOpMode {
 
     // ---- Hardware (change to match your Robot Configuration) ----
-    // The flywheel motor is "launcher" (the same motor ShooterSubsystem uses). Only this one is driven here.
-    private static final String MOTOR_NAME = "launcher";
+    // Same flywheel motor ShooterSubsystem uses (its name lives in ShooterSubsystem.FLYWHEEL_NAME).
+    private static final String MOTOR_NAME = ShooterSubsystem.FLYWHEEL_NAME;
     private static final boolean REVERSED = false;
     /**
      * Encoder ticks per motor revolution. The Robot Configuration has the flywheel set to a
@@ -152,6 +152,9 @@ public class FlywheelTuner extends LinearOpMode {
         CommandScheduler.getInstance().reset();
         Intake intake = new Intake(hardwareMap);
         ShooterSubsystem shooter = new ShooterSubsystem(hardwareMap);
+        // ShooterSubsystem puts the flywheel in RUN_USING_ENCODER (hub speed control). The tuner runs its
+        // OWN PIDF, so switch it back, otherwise two speed controllers fight each other.
+        flywheel.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         GamepadEx driver = new GamepadEx(gamepad1);
         Command intakeToggle = intake.intakeCommand();
         driver.getGamepadButton(GamepadKeys.Button.B).toggleWhenPressed(intakeToggle);

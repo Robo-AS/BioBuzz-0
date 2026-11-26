@@ -2,32 +2,49 @@ package org.firstinspires.ftc.teamcode.subs;
 
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class ShooterSubsystem extends SubsystemBase {
 
-    private final DcMotor feeder, launcher;
+    /** Robot Configuration name of the flywheel motor (also used by the Flywheel Tuner). */
+    public static final String FLYWHEEL_NAME = "flywheel";
+
+    private final DcMotor feeder, flywheel;
 
     private boolean feederOn = false;
-    private boolean launcherOn = false;
+    private boolean flywheelOn = false;
 
     public ShooterSubsystem(HardwareMap hardwareMap) {
         feeder = hardwareMap.get(DcMotor.class, "feeder");
-        launcher = hardwareMap.get(DcMotor.class, "launcher");
+        flywheel = hardwareMap.get(DcMotor.class, FLYWHEEL_NAME);
+        flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     public void toggleFeeder() {
-        feederOn = !feederOn;
-        feeder.setPower(feederOn ? 1.0 : 0.0);
+        setFeeder(!feederOn);
     }
 
     public boolean isFeederOn() {
         return feederOn;
     }
 
-    public void toggleLauncher() {
-        launcherOn = !launcherOn;
-        launcher.setPower(launcherOn ? 0.85 : 0.0);
+    public void toggleflywheel() {
+        setFlywheel(!flywheelOn);
+    }
+
+    // Metode noi pentru Auto (control exact ON / OFF)
+    public void setFeeder(boolean on) {
+        feederOn = on;
+        feeder.setPower(on ? 1.0 : 0.0);
+    }
+
+    public void setFlywheel(boolean on) {
+        flywheelOn = on;
+        flywheel.setPower(on ? 0.85 : 0.0);
+    }
+
+    public void stopAll() {
+        setFeeder(false);
+        setFlywheel(false);
     }
 }

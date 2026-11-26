@@ -8,13 +8,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.drive.HeadingHold;
 import org.firstinspires.ftc.teamcode.drive.MecanumDrive;
 
-/**
- * TeleOp drivetrain subsystem. Wraps MecanumDrive (drive math + auto aim untouched)
- * and reads the pose from FollowerSubsystem.
- *
- * IMPORTANT: build this AFTER FollowerSubsystem, so MecanumDrive's motor directions win.
- * Do NOT build it in Auto — there Pedro's own motor directions must be used.
- */
 public class DriveSubsystem extends SubsystemBase {
 
     private final MecanumDrive mecanum;
@@ -38,17 +31,12 @@ public class DriveSubsystem extends SubsystemBase {
     public void resetPose(Pose startPose) {
         localizer.setPose(startPose);
         headingHold.reset();
-        mecanum.resetFreeRoamProfile();
     }
 
     public void motorTelemetry(Telemetry telemetry) {
-        telemetry.addData("FL mode", mecanum.frontLeft.getMode());
-        telemetry.addData("FR mode", mecanum.frontRight.getMode());
-        telemetry.addData("RL mode", mecanum.rearLeft.getMode());
-        telemetry.addData("RR mode", mecanum.rearRight.getMode());
-        telemetry.addData("FL speed (ticks/s)", "%.0f", Math.abs(mecanum.frontLeft.getVelocity()));
-        telemetry.addData("FR speed (ticks/s)", "%.0f", Math.abs(mecanum.frontRight.getVelocity()));
-        telemetry.addData("RL speed (ticks/s)", "%.0f", Math.abs(mecanum.rearLeft.getVelocity()));
-        telemetry.addData("RR speed (ticks/s)", "%.0f", Math.abs(mecanum.rearRight.getVelocity()));
+        telemetry.addData("FL power", "%.2f", mecanum.frontLeft.getPower());
+        telemetry.addData("FR power", "%.2f", mecanum.frontRight.getPower());
+        telemetry.addData("RL power", "%.2f", mecanum.rearLeft.getPower());
+        telemetry.addData("RR power", "%.2f", mecanum.rearRight.getPower());
     }
 }

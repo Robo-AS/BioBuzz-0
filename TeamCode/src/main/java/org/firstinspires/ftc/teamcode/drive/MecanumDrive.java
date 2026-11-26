@@ -26,7 +26,7 @@ public class MecanumDrive {
     public static double AIM_KS = 0.06;             // minimum power to overcome friction
     public static double AIM_MAX_POWER = 0.8;
     public static double AIM_TOLERANCE_RAD = Math.toRadians(1.0);
-    public static double AIM_TURN_SIGN = 1.0;      // flip to +1.0 if it turns AWAY from the goal
+    public static double AIM_TURN_SIGN = -1.0;      // flip to +1.0 if it turns AWAY from the goal
     public static double SHOOTER_HEADING_OFFSET_RAD = Math.toRadians(180); // aim with the robot's BACK (value is in radians!)
 
     private double goalX = 0, goalY = 0;
@@ -35,8 +35,8 @@ public class MecanumDrive {
     private boolean aimWasActive = false;
     public boolean aimedAtGoal = false;
     final double velocityLimitTicksPerSecond;
-    public static double ACCEL_CHANGE_PER_SECOND = 8.0;
-    public static double DECEL_CHANGE_PER_SECOND = 3.0;
+    public static double ACCEL_CHANGE_PER_SECOND = 15.0;
+    public static double DECEL_CHANGE_PER_SECOND = 10.0;
 
     private double profiledX;
     private double profiledY;
