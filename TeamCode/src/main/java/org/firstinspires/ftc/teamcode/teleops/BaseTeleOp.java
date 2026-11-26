@@ -64,7 +64,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
         drive.setGoal(goalX(), goalY());
 
         intake = new Intake(hardwareMap);
-        faras = new FarasSubsystem(hardwareMap);
+        //faras = new FarasSubsystem(hardwareMap);
         intakeServo = new IntakeServo(hardwareMap);
         driver = new GamepadEx(gamepad1);
 

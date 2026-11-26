@@ -4,13 +4,16 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.Range;
 
 public class ShooterSubsystem extends SubsystemBase {
 
     public static final String FLYWHEEL_NAME = "flywheel";
-
-    // ATENȚIE: Modifică dacă motorul tău nu are 28 ticks/rev
     public static final double TICKS_PER_REV = 28.0;
+
+    // Exact coeficienții din Shooter Tuner
+    public static double kP = 0.0005;
+    public static double kF = 0.00021;
 
     private final DcMotor feeder;
     private final DcMotorEx flywheel;
@@ -22,9 +25,8 @@ public class ShooterSubsystem extends SubsystemBase {
         feeder = hardwareMap.get(DcMotor.class, "feeder");
         flywheel = hardwareMap.get(DcMotorEx.class, FLYWHEEL_NAME);
 
-        // Activează PID-ul intern
-        flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        flywheel.setVelocityPIDFCoefficients(0.0005, 0.0, 0.0, 0.00021);
+        // Folosim RUN_WITHOUT_ENCODER + bucla noastră PIDF (exact ca în Shooter Tuner)
+        flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     public void toggleFeeder() {
@@ -38,8 +40,12 @@ public class ShooterSubsystem extends SubsystemBase {
     public void toggleflywheel() {
         flywheelOn = !flywheelOn;
         if (!flywheelOn) {
-            flywheel.setPower(0);
+            flywheel.setPower(0.0);
         }
+    }
+
+    public boolean isFlywheelOn() {
+        return flywheelOn;
     }
 
     public void setFeeder(boolean on) {
@@ -47,16 +53,26 @@ public class ShooterSubsystem extends SubsystemBase {
         feeder.setPower(on ? 1.0 : 0.0);
     }
 
+    public double getActualRpm() {
+        return (flywheel.getVelocity() * 60.0) / TICKS_PER_REV;
+    }
+
     public void updateFlywheelRpm(double targetRpm) {
-        if (flywheelOn) {
-            double ticksPerSecond = (targetRpm * TICKS_PER_REV) / 60.0;
-            flywheel.setVelocity(ticksPerSecond);
+        if (!flywheelOn) {
+            flywheel.setPower(0.0);
+            return;
         }
+
+        double actualRpm = getActualRpm();
+        double error = targetRpm - actualRpm;
+        double power = (kF * targetRpm) + (kP * error);
+
+        flywheel.setPower(Range.clip(power, 0.0, 1.0));
     }
 
     public void stopAll() {
         setFeeder(false);
         flywheelOn = false;
-        flywheel.setPower(0);
+        flywheel.setPower(0.0);
     }
 }
