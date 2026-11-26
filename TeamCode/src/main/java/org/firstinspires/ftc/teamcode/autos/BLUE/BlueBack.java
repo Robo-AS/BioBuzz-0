@@ -103,7 +103,7 @@ public class BlueBack extends RobotOpMode {
 
     private Command driveAndShoot(Path pathToShoot) {
         return new SequentialCommandGroup(
-                new InstantCommand(() -> shooter.setFlywheel(true), shooter),
+                //new InstantCommand(() -> shooter.setFlywheel(true), shooter),
                 follow(pathToShoot),
                 new WaitCommand(SPINUP_WAIT_MS),
                 new InstantCommand(() -> shooter.setFeeder(true), shooter),

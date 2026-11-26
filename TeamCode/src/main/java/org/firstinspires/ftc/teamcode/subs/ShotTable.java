@@ -1,22 +1,17 @@
 package org.firstinspires.ftc.teamcode.subs;
 
-/**
- * Distance-to-hive -> flywheel RPM + hood position, with linear interpolation between rows.
- *
- * Fill it with the Shooter Tuner: drive to a spot, find the RPM + hood that score, press A,
- * repeat at several distances, then paste the printed lines below (sorted by distance).
- * Outside the table's range the closest row is used (no extrapolation).
- *
- * !! PLACEHOLDER VALUES — replace with your tuned rows !!
- */
 public final class ShotTable {
     private ShotTable() {}
 
-    //                      distance (in), flywheel RPM, hood position (0.0 - 0.5)
+    // distance (in), flywheel target RPM, hood position (0.0 - 0.5)
     public static double[][] TABLE = {
-            { 40, 2000, 0.00 },
-            { 80, 2600, 0.20 },
-            { 120, 3200, 0.40 },
+            { 35.41, 3690, 0.50 },
+            { 53.29, 3700, 0.50 },
+            { 56.78, 3800, 0.50 },
+            { 60.15, 3790, 0.50 },
+            { 64.22, 3800, 0.47 },
+            { 66.28, 3790, 0.47 },
+            { 76.91, 3800, 0.44 },
     };
 
     public static double rpm(double distance) { return interpolate(distance, 1); }
@@ -34,7 +29,6 @@ public final class ShotTable {
         return t[t.length - 1][column];
     }
 
-    /** Straight-line distance from the robot (x, y) to the hive (goalX, goalY), Pinpoint units (inches). */
     public static double distance(double x, double y, double goalX, double goalY) {
         return Math.hypot(goalX - x, goalY - y);
     }

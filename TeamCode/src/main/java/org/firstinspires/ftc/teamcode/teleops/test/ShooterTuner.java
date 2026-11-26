@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.teleops.test;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.ValueProvider;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.button.Trigger;
@@ -53,6 +54,15 @@ import java.util.function.Supplier;
  */
 @TeleOp(name = "Shooter Tuner", group = "Test")
 public class ShooterTuner extends BaseTeleOp {
+
+    @Override
+    protected Command createDefaultDriveCommand() {
+        // Pure manual drive: NO auto-aim, NO heading-hold auto-correction
+        return new RunCommand(() -> {
+            Pose pose = drive.pose();
+            drive.mecanum().fieldCentric(driver, pose.heading(), -driver.getRightX());
+        }, drive);
+    }
 
     // BLUE, same as TeleOp1
     private static final PoseFactory P = PoseFactory.degrees();
