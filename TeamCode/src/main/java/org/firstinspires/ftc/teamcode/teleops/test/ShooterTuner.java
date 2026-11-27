@@ -47,13 +47,20 @@ import java.util.function.Supplier;
  *   L3 / R3        hood -0.02 / +0.02         (stick clicks, manual mode)
  *   back / share   switch MANUAL <-> TABLE    (TABLE = RPM + hood from ShotTable by distance)
  *   A              SAVE this shot: {distance, RPM, hood} -> printed as Java lines in telemetry.
- *                  Paste the lines into ShotTable.TABLE (they are already sorted by distance).
+ *                  Rows are listed per side: paste them into ShotTable.TABLE_BACK / TABLE_FRONT
+ *                  (the side is picked from the robot's Y vs the goal's Y, shown in telemetry).
  *
  * Workflow: put robot on the TeleOp1 start spot -> INIT/START -> drive to a distance -> X (aim) ->
  * Y (spin up) -> adjust RPM + hood until shots score -> A (save) -> next distance.
  */
 @TeleOp(name = "Shooter Tuner", group = "Test")
 public class ShooterTuner extends BaseTeleOp {
+
+    /** The tuner controls flywheel + hood itself (MANUAL / TABLE), so BaseTeleOp must not. */
+    @Override
+    protected boolean useAutomaticShooting() {
+        return false;
+    }
 
     @Override
     protected Command createDefaultDriveCommand() {
@@ -91,13 +98,16 @@ public class ShooterTuner extends BaseTeleOp {
 
     private double distance = 0, actualRpm = 0, power = 0, voltage = 12;
     private long lastVoltageNs = 0;
-    private final List<double[]> saved = new ArrayList<>();
+    private final List<double[]> savedBack = new ArrayList<>();
+    private final List<double[]> savedFront = new ArrayList<>();
+    private boolean frontSide = false;
 
     @Override
     protected void configureBindings() {
-        shooter = new ShooterSubsystem(hardwareMap);   // feeder (and it grabs the flywheel motor)
-        hood = new HoodServo(hardwareMap);
-        blocker = new BlockerServo(hardwareMap);
+        // Use BaseTeleOp's objects (creating second ones for the same hardware would conflict).
+        shooter = shooterSubsystem;
+        this.hood = super.hood;
+        blocker = blockerServo;
         blocker.blocked();
         flywheel = hardwareMap.get(DcMotorEx.class, ShooterSubsystem.FLYWHEEL_NAME);
         // ShooterSubsystem sets RUN_USING_ENCODER (hub speed control). We run our own PIDF -> switch back.
@@ -167,9 +177,11 @@ public class ShooterTuner extends BaseTeleOp {
         distance = ShotTable.distance(pose.x(), pose.y(),
                 drive.mecanum().getGoalX(), drive.mecanum().getGoalY());
 
+        double gx = drive.mecanum().getGoalX(), gy = drive.mecanum().getGoalY();
+        frontSide = ShotTable.isFront(pose.y(), gy);
         if (useTable) {
-            targetRpm = ShotTable.rpm(distance);
-            hoodPos = ShotTable.hood(distance);
+            targetRpm = ShotTable.rpm(pose.x(), pose.y(), gx, gy);
+            hoodPos = ShotTable.hood(pose.x(), pose.y(), gx, gy);
         }
         if (Math.abs(hood.getPosition() - hoodPos) > 1e-4) hood.setPosition(hoodPos);
 
@@ -183,8 +195,9 @@ public class ShooterTuner extends BaseTeleOp {
 
     private void saveShot() {
         double[] row = { Math.round(distance * 10) / 10.0, Math.round(targetRpm), Math.round(hoodPos * 1000) / 1000.0 };
-        saved.add(row);
-        saved.sort((a, b) -> Double.compare(a[0], b[0]));
+        List<double[]> list = frontSide ? savedFront : savedBack;
+        list.add(row);
+        list.sort((a, b) -> Double.compare(a[0], b[0]));
     }
 
     @Override
@@ -192,7 +205,7 @@ public class ShooterTuner extends BaseTeleOp {
         super.addTelemetry();
         telemetry.addLine("--- SHOOTER TUNER ---");
         telemetry.addData("Mode", useTable ? "TABLE (from distance)" : "MANUAL");
-        telemetry.addData("Distance to hive", "%.1f in", distance);
+        telemetry.addData("Distance to hive", "%.1f in   side: %s", distance, frontSide ? "FRONT" : "BACK");
         telemetry.addData("Flywheel", "%s  target %.0f  actual %.0f RPM  power %.2f",
                 flywheelOn ? "ON" : "OFF", targetRpm, actualRpm, power);
         telemetry.addData("Hood", "%.3f", hoodPos);
@@ -200,16 +213,20 @@ public class ShooterTuner extends BaseTeleOp {
         telemetry.addData("PIDF", "P %.5f  I %.5f  D %.5f  F %.6f",
                 FlywheelPIDF.kP, FlywheelPIDF.kI, FlywheelPIDF.kD, FlywheelPIDF.kF);
         telemetry.addData("Battery", "%.2f V", voltage);
-        telemetry.addLine("Saved shots (paste into ShotTable.TABLE):");
-        for (double[] r : saved) telemetry.addLine(String.format("  { %.1f, %.0f, %.3f },", r[0], r[1], r[2]));
+        telemetry.addLine("Saved -> ShotTable.TABLE_BACK:");
+        for (double[] r : savedBack) telemetry.addLine(String.format("  { %.1f, %.0f, %.3f },", r[0], r[1], r[2]));
+        telemetry.addLine("Saved -> ShotTable.TABLE_FRONT:");
+        for (double[] r : savedFront) telemetry.addLine(String.format("  { %.1f, %.0f, %.3f },", r[0], r[1], r[2]));
 
         TelemetryPacket packet = new TelemetryPacket();
         packet.put("Target RPM", flywheelOn ? targetRpm : 0);
         packet.put("Actual RPM", actualRpm);
         packet.put("Distance", distance);
         packet.put("Hood x1000", hoodPos * 1000);
-        packet.addLine("Saved shots (paste into ShotTable.TABLE):");
-        for (double[] r : saved) packet.addLine(String.format("{ %.1f, %.0f, %.3f },", r[0], r[1], r[2]));
+        packet.addLine("Saved -> ShotTable.TABLE_BACK:");
+        for (double[] r : savedBack) packet.addLine(String.format("{ %.1f, %.0f, %.3f },", r[0], r[1], r[2]));
+        packet.addLine("Saved -> ShotTable.TABLE_FRONT:");
+        for (double[] r : savedFront) packet.addLine(String.format("{ %.1f, %.0f, %.3f },", r[0], r[1], r[2]));
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 

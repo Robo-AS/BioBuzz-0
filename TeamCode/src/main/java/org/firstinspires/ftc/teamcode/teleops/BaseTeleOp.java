@@ -7,6 +7,7 @@ import com.arcrobotics.ftclib.command.WaitCommand;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.pedropathing.api.PoseFactory;
 import com.pedropathing.math.Pose;
 
 import org.firstinspires.ftc.teamcode.RobotOpMode;
@@ -26,6 +27,8 @@ import org.firstinspires.ftc.teamcode.subs.ShotTable;
 public abstract class BaseTeleOp extends RobotOpMode {
 
     public static double AIM_TRIGGER_THRESHOLD = 0.3;
+    /** Options resets the pose (auto aim reference) here, for both RED and BLUE. */
+    public static final Pose RESET_POSE = PoseFactory.degrees().of(132, 9, 90);
     public static boolean DEBUG_TELEMETRY = true;
 
     protected FollowerSubsystem follower;
@@ -64,7 +67,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
         drive.setGoal(goalX(), goalY());
 
         intake = new Intake(hardwareMap);
-        //faras = new FarasSubsystem(hardwareMap);
+        faras = new FarasSubsystem(hardwareMap); // needed by R1 below (was commented out -> R1 would crash)
         intakeServo = new IntakeServo(hardwareMap);
         driver = new GamepadEx(gamepad1);
 
@@ -80,7 +83,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
         drive.setDefaultCommand(createDefaultDriveCommand());
 
         new Trigger(() -> gamepad1.options)
-                .whenActive(new InstantCommand(() -> drive.resetPose(startPose())));
+                .whenActive(new InstantCommand(() -> drive.resetPose(RESET_POSE)));
 
         driver.getGamepadButton(GamepadKeys.Button.X)
                 .toggleWhenPressed(autoAim);
@@ -181,20 +184,24 @@ public abstract class BaseTeleOp extends RobotOpMode {
         }
     }
 
+    /** Distance-based flywheel RPM + hood every loop. Tuning TeleOps return false to control them by hand. */
+    protected boolean useAutomaticShooting() {
+        return true;
+    }
+
     private void updateAutomaticShooting() {
         Pose pose = drive.pose();
-        double dist = ShotTable.distance(pose.x(), pose.y(), goalX(), goalY());
-
-        double targetHood = ShotTable.hood(dist);
+        // Picks the table for the side of the hive the robot is on, then interpolates by distance.
+        double targetHood = ShotTable.hood(pose.x(), pose.y(), goalX(), goalY());
         hood.setPosition(targetHood);
 
-        double targetRpm = ShotTable.rpm(dist);
+        double targetRpm = ShotTable.rpm(pose.x(), pose.y(), goalX(), goalY());
         shooterSubsystem.updateFlywheelRpm(targetRpm);
     }
 
     @Override
     protected void addTelemetry() {
-        updateAutomaticShooting();
+        if (useAutomaticShooting()) updateAutomaticShooting();
         updateLeds();
 
         Pose pose = drive.pose();
@@ -202,9 +209,9 @@ public abstract class BaseTeleOp extends RobotOpMode {
         double dist = ShotTable.distance(pose.x(), pose.y(), goalX(), goalY());
 
         telemetry.addData("Auto aim", aiming);
-        telemetry.addData("Distance to goal", "%.1f in", dist);
-        telemetry.addData("Auto Hood", "%.3f", ShotTable.hood(dist));
-        telemetry.addData("Target RPM", "%.0f", ShotTable.rpm(dist));
+        telemetry.addData("Distance to goal", "%.1f in  (%s side table)", dist, ShotTable.sideName(pose.y(), goalY()));
+        telemetry.addData("Auto Hood", "%.3f", ShotTable.hood(pose.x(), pose.y(), goalX(), goalY()));
+        telemetry.addData("Target RPM", "%.0f", ShotTable.rpm(pose.x(), pose.y(), goalX(), goalY()));
 
         if (!aiming) {
             telemetry.addData("Hold error (deg)", Math.toDegrees(drive.headingHold().lastError()));
