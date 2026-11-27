@@ -24,6 +24,7 @@ public class AutoAimDriveCommand extends CommandBase {
 
     @Override
     public void initialize() {
+        drive.mecanum().resetAim();
         drive.mecanum().resetFreeRoamProfile();
     }
 

@@ -238,6 +238,8 @@ public class MecanumDrive {
     public void resetAim() {
         aimWasActive = false;
         aimedAtGoal = false;
+        lastAimTimeNs = 0;
+        lastAimError = 0;
     }
 
     // ---------------- Robot centric ----------------
