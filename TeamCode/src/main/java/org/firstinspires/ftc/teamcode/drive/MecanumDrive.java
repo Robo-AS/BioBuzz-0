@@ -25,6 +25,11 @@ public class MecanumDrive {
     public static double AIM_KD = 0.12;             // damping, stops overshoot
     public static double AIM_KS = 0.06;             // minimum power to overcome friction
     public static double AIM_MAX_POWER = 0.8;
+    /** true = ROBOT-centric driving (stick forward = robot forward). Auto aim still uses the real heading to turn. */
+    public static boolean ROBOT_CENTRIC = true;
+    /** Robot centric: FORWARD speed is scaled to this (full stick = 0.6). Backward, strafe and turn stay at 1.0. */
+    public static double MAX_FORWARD_POWER = 0.6;
+
     public static double AIM_TOLERANCE_RAD = Math.toRadians(1.0);
     public static double AIM_TURN_SIGN = 1.0;       // +1 = correct for this drivetrain. -1 makes auto aim AND heading hold turn away and shake
     public static double SHOOTER_HEADING_OFFSET_RAD = Math.toRadians(180); // aim with the robot's BACK (value is in radians!)
@@ -55,10 +60,8 @@ public class MecanumDrive {
             motor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
             motor.setMode(DcMotorEx.RunMode.RUN_WITHOUT_ENCODER);
         }
-        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        rearLeft.setDirection(DcMotorSimple.Direction.FORWARD);
-        rearRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        frontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        applyDirections();
+        directionFixes = 0; // overriding Pedro once at startup is expected, don't count it
 
         double slowestMotor = Double.POSITIVE_INFINITY;
         for (DcMotorEx motor : motors) {
@@ -68,6 +71,28 @@ public class MecanumDrive {
             );
         }
         velocityLimitTicksPerSecond = slowestMotor * 1;
+    }
+
+    /**
+     * OUR motor directions. Pedro (pedro/Constants.java) uses the OPPOSITE directions on the same
+     * motors and runs every loop in TeleOp for odometry. Re-applied before every drive output so
+     * ours always win, even if Pedro sets its own again. setDirection() only changes a value in
+     * the SDK (no hardware message), so this costs nothing.
+     */
+    /** How many times we found Pedro's directions on the motors and put ours back (shown in telemetry). */
+    public int directionFixes = 0;
+
+    public void applyDirections() {
+        if (frontLeft.getDirection() != DcMotorSimple.Direction.FORWARD
+                || frontRight.getDirection() != DcMotorSimple.Direction.REVERSE
+                || rearLeft.getDirection() != DcMotorSimple.Direction.FORWARD
+                || rearRight.getDirection() != DcMotorSimple.Direction.REVERSE) {
+            directionFixes++;
+        }
+        frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        rearLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        rearRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
     public void setDriveVelocityMode(boolean enabled) {
@@ -157,6 +182,12 @@ public class MecanumDrive {
         double y = addons(-gamepad.getLeftX()) * reverse;
         double r = Math.max(-1.0, Math.min(1.0, turnPower));
 
+        // Robot centric = the math below with a FIXED 90° heading (the start heading), so the stick
+        // is never rotated by the real heading. Gives exactly the same motor mix as teleop() below.
+        if (ROBOT_CENTRIC) {
+            headingRadians = Math.PI / 2;
+            if (x > 0) x *= MAX_FORWARD_POWER; // x > 0 = driving forward; backward stays full power
+        }
         double cos = Math.cos(headingRadians);
         double sin = Math.sin(headingRadians);
         double rotatedX = x * cos + y * sin;
@@ -171,6 +202,7 @@ public class MecanumDrive {
                 Math.max(Math.abs(leftFrontPower), Math.abs(rightFrontPower)),
                 Math.max(Math.abs(leftRearPower), Math.abs(rightRearPower))));
 
+        applyDirections(); // make sure Pedro's (opposite) directions never drive TeleOp
         frontLeft.setPower(leftFrontPower / maxPower);
         frontRight.setPower(rightFrontPower / maxPower);
         rearLeft.setPower(leftRearPower / maxPower);
@@ -201,8 +233,9 @@ public class MecanumDrive {
     }
 
     public static double angleWrap(double rad) {
-        while (rad > Math.PI) rad -= 2 * Math.PI;
-        while (rad < -Math.PI) rad += 2 * Math.PI;
+        // No while-loops: a garbage heading (huge number) from a bad odometry read must not hang the loop.
+        if (Double.isNaN(rad) || Double.isInfinite(rad)) return 0;
+        rad = Math.IEEEremainder(rad, 2 * Math.PI);
         return rad;
     }
 
@@ -213,6 +246,11 @@ public class MecanumDrive {
 
     /** Turn power that rotates the robot toward the goal. Call every loop while aiming. */
     public double autoAimTurnPower(double x, double y, double headingRadians) {
+        // Bad odometry read (NaN / infinite) -> don't turn at all instead of spinning wildly.
+        if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(headingRadians)) {
+            resetAim();
+            return 0;
+        }
         double error = angleWrap(headingToGoal(x, y) - headingRadians);
 
         long now = System.nanoTime();

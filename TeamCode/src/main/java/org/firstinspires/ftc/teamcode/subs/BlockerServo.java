@@ -13,7 +13,5 @@ public class BlockerServo extends SubsystemBase {
     public void blocked(){
         blocker.setPosition(0.4);
     }
-    public void notblocked(){
-        blocker.setPosition(0.0);
-    }
+    public void notblocked(){blocker.setPosition(0.1);}
 }

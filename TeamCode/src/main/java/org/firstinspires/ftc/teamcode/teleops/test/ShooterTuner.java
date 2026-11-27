@@ -77,6 +77,7 @@ public class ShooterTuner extends BaseTeleOp {
     private static final double GOAL_X = 77;
     private static final double GOAL_Y = 71;
 
+    @Override protected boolean resetOnY() { return false; } // Y = flywheel here; reset is on OPTIONS
     @Override protected Pose startPose() { return START; }
     @Override protected double goalX() { return GOAL_X; }
     @Override protected double goalY() { return GOAL_Y; }

@@ -38,8 +38,12 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void toggleflywheel() {
-        flywheelOn = !flywheelOn;
-        if (!flywheelOn) {
+        setFlywheel(!flywheelOn);
+    }
+
+    public void setFlywheel(boolean on) {
+        this.flywheelOn = on;
+        if (!on) {
             flywheel.setPower(0.0);
         }
     }
@@ -51,6 +55,12 @@ public class ShooterSubsystem extends SubsystemBase {
     public void setFeeder(boolean on) {
         feederOn = on;
         feeder.setPower(on ? 1.0 : 0.0);
+    }
+
+    /** Feeder (transfer) at any power, e.g. -1.0 to run it backwards. */
+    public void setFeederPower(double power) {
+        feederOn = power != 0.0;
+        feeder.setPower(power);
     }
 
     public double getActualRpm() {

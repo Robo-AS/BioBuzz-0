@@ -6,6 +6,8 @@ package org.firstinspires.ftc.teamcode.drive;
  * robot to stop spinning, lock that heading, then hold it with a P controller.
  */
 public class HeadingHold {
+    /** false = no heading hold: right stick released -> no turning. TeleOp starts with it OFF, OPTIONS toggles it. */
+    public static boolean ENABLED = false;
     public static double KP = 0.8;
     public static double MAX_TURN = 0.25;
     public static double STICK_DEADZONE = 0.08;
@@ -30,7 +32,11 @@ public class HeadingHold {
         long now = System.nanoTime();
         double turnPower;
 
-        if (manualTurn) {
+        if (!ENABLED) {
+            heldHeading = heading;
+            ready = false;
+            turnPower = manualTurn ? drive.addons(stickTurn) : 0.0;
+        } else if (manualTurn) {
             heldHeading = heading;
             ready = false;
             turnPower = drive.addons(stickTurn);
