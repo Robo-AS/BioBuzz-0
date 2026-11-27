@@ -11,9 +11,7 @@ public class BlockerServo extends SubsystemBase {
         blocker=hardwareMap.get(Servo.class,"servo_blocker");
     }
     public void blocked(){
-        blocker.setPosition(0.4);
+        blocker.setPosition(0.3);
     }
-    public void notblocked(){
-        blocker.setPosition(0.0);
-    }
+    public void notblocked(){blocker.setPosition(0.1);}
 }
