@@ -117,8 +117,9 @@ public abstract class BaseTeleOp extends RobotOpMode {
                 .whenActive(new SequentialCommandGroup(
                         new InstantCommand(autoAim::schedule), // Pornește țintirea automată imediat
                         new WaitCommand(200),                  // Așteaptă 0.5 secunde
-                        new InstantCommand(blockerServo::notblocked, blockerServo),
                         new InstantCommand(intakeServo::toB, intakeServo),
+                        new InstantCommand(blockerServo::notblocked, blockerServo),
+                        new WaitCommand(250),
                         new InstantCommand(() -> shooterSubsystem.setFeeder(true), shooterSubsystem),
                         new InstantCommand(() -> intake.setPower(1), intake),
                         new InstantCommand(() -> leds.setColor(LedSubsystem.VIOLET), leds)
