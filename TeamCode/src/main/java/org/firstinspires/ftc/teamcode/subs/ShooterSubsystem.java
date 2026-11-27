@@ -38,8 +38,12 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void toggleflywheel() {
-        flywheelOn = !flywheelOn;
-        if (!flywheelOn) {
+        setFlywheel(!flywheelOn);
+    }
+
+    public void setFlywheel(boolean on) {
+        this.flywheelOn = on;
+        if (!on) {
             flywheel.setPower(0.0);
         }
     }

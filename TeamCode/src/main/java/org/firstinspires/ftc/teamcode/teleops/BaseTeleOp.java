@@ -119,7 +119,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
                         new WaitCommand(200),                  // Așteaptă 0.5 secunde
                         new InstantCommand(intakeServo::toB, intakeServo),
                         new InstantCommand(blockerServo::notblocked, blockerServo),
-                        new WaitCommand(250),
+                        new WaitCommand(400),
                         new InstantCommand(() -> shooterSubsystem.setFeeder(true), shooterSubsystem),
                         new InstantCommand(() -> intake.setPower(1), intake),
                         new InstantCommand(() -> leds.setColor(LedSubsystem.VIOLET), leds)
@@ -167,6 +167,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
     protected void onStart() {
         schedule(intakeServo.toACommand());
         blockerServo.blocked();
+        shooterSubsystem.setFlywheel(true);
         leds.setColor(LedSubsystem.WHITE);
     }
 

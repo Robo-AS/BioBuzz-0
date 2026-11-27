@@ -9,9 +9,9 @@ public final class ShotTable {
             { 53.29, 3700, 0.50 },
             { 56.78, 3800, 0.50 },
             { 60.15, 3790, 0.50 },
-            { 64.22, 3800, 0.47 },
-            { 66.28, 3790, 0.47 },
-            { 76.91, 3800, 0.44 },
+            { 64.22, 3800, 0.45 },
+            { 66.28, 3790, 0.45 },
+            { 76.91, 3800, 0.4 },
     };
 
     public static double rpm(double distance) { return interpolate(distance, 1); }
