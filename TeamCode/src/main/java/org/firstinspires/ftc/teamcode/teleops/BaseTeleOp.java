@@ -219,5 +219,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
         }
 
         drive.mecanum().aimTelemetry(telemetry, pose.x(), pose.y(), pose.heading());
+
+        faras.telemetry(telemetry);
     }
 }
