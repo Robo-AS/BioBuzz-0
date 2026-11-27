@@ -9,8 +9,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 /** The "servo_intake" servo: switches between two positions (found with the Servo Tuner). */
 public class IntakeServo extends SubsystemBase {
 
-    public static double POSITION_A = 0.21;
-    public static double POSITION_B = 0.9;
+    public static double POSITION_A = 0.0;
+    public static double POSITION_B = 0.6;
 
     private final Servo servo;
     private boolean atB = false;

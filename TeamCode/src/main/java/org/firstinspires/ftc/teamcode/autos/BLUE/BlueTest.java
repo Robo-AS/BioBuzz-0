@@ -1,32 +1,48 @@
 package org.firstinspires.ftc.teamcode.autos.BLUE;
 
-import static com.pedropathing.api.Paths.*;
+import com.arcrobotics.ftclib.command.Command;
+import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.SequentialCommandGroup;
+import com.arcrobotics.ftclib.command.WaitCommand;
 import com.pedropathing.api.Paths;
-
 import com.pedropathing.api.PoseFactory;
-import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
-import com.pedropathing.ivy.Command;
-import com.pedropathing.ivy.Scheduler;
-import static com.pedropathing.ivy.Scheduler.schedule;
-import static com.pedropathing.ivy.commands.Commands.*;
-import static com.pedropathing.ivy.groups.Groups.sequential;
-import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.teamcode.pedro.Constants;
+import org.firstinspires.ftc.teamcode.RobotOpMode;
+import org.firstinspires.ftc.teamcode.commands.FollowPathCommand;
+import org.firstinspires.ftc.teamcode.subs.BlockerServo;
+import org.firstinspires.ftc.teamcode.subs.FarasSubsystem;
+import org.firstinspires.ftc.teamcode.subs.FollowerSubsystem;
+import org.firstinspires.ftc.teamcode.subs.HoodServo;
+import org.firstinspires.ftc.teamcode.subs.Intake;
+import org.firstinspires.ftc.teamcode.subs.IntakeServo;
+import org.firstinspires.ftc.teamcode.subs.ShooterSubsystem;
 
-@Autonomous(name = "AutoPath", group = "Autonomous")
-public class BlueTest extends LinearOpMode {
+@Autonomous(name = "🔵 Blue Test - Full Auto", group = "🔵 Blue")
+public class BlueTest extends RobotOpMode {
 
-    private Follower follower;
+    public static double INTAKE_POWER = 0.75;
+    public static double DRIVE_SPEED = 0.6;
+    public static long FLYWHEEL_SPINUP_MS = 1000;
+    public static long SHOOT_WAIT_MS = 1200;
+    public static double HOOD_POSITION = 0.47;
+
+    private FollowerSubsystem follower;
+    private Intake intake;
+    private ShooterSubsystem shooter;
+    private BlockerServo blocker;
+    private IntakeServo intakeServo;
+    private FarasSubsystem faras;
+    private HoodServo hood;
+
+    private String step = "waiting for START";
 
     private final PoseFactory poseFactory = PoseFactory.degrees();
 
     private final Pose start = poseFactory.of(87.9039, 131.6771, 90);
-    private final Pose path1 = poseFactory.of(87.7063, 113.9454, 90);
+    private final Pose path1Pose = poseFactory.of(87.7063, 113.9454, 90);
     private final Pose point2Start = poseFactory.of(87.7063, 113.9454, 90);
     private final Pose point2 = poseFactory.of(88.2352, 134.2903, 0);
     private final Pose point3Start = poseFactory.of(88.2352, 134.2903, 0);
@@ -45,50 +61,8 @@ public class BlueTest extends LinearOpMode {
     private final Pose point9 = poseFactory.of(129.4892, 48.1952, 90);
     private final Pose point9Control1 = poseFactory.of(111.1148, 106.8592, 0);
 
-    // Autonomous routine
-    public Command autoRoutine() {
-        return sequential(
-                follow(follower, path1()),
-                follow(follower, path2()),
-                follow(follower, path3()),
-                follow(follower, path4()),
-                follow(follower, path5()),
-                follow(follower, path6()),
-                follow(follower, path7()),
-                follow(follower, path8()),
-                follow(follower, path9())
-        );
-    }
-
-    @Override
-    public void runOpMode() {
-        Scheduler.reset();
-        follower = Constants.create(hardwareMap);
-        follower.setPose(start);
-        follower.update();
-
-        waitForStart();
-        schedule(autoRoutine());
-
-        while (opModeIsActive()) {
-            follower.update();
-            Scheduler.execute();
-
-            telemetry.addData("x", follower.pose().x());
-            telemetry.addData("y", follower.pose().y());
-            telemetry.addData("heading", follower.pose().heading());
-
-            if (follower.currentPath() != null) {
-                telemetry.addData("Current path distance remaining", follower.distanceToEndpoint());
-                telemetry.addData("Path number", follower.pathIndex());
-            }
-
-            telemetry.update();
-        }
-    }
-
     public Path path1() {
-        return Paths.line(start, path1).constant(path1);
+        return Paths.line(start, path1Pose).constant(path1Pose);
     }
 
     public Path path2() {
@@ -121,5 +95,100 @@ public class BlueTest extends LinearOpMode {
 
     public Path path9() {
         return Paths.curve(point8, point9Control1, point9).constant(point9);
+    }
+
+    private Command follow(Path path) {
+        return new FollowPathCommand(follower, path.with(
+                org.firstinspires.ftc.teamcode.pedro.Constants.foresightConfig.maxPathSpeed.at(DRIVE_SPEED)));
+    }
+
+    /** Sequence to shoot elements: set hood -> start flywheel -> WAIT FOR SPINUP -> unblock -> feeder on -> wait -> stop shooter. */
+    private Command shootSequence() {
+        return new SequentialCommandGroup(
+                new InstantCommand(() -> hood.setPosition(HOOD_POSITION), hood),
+                new InstantCommand(() -> shooter.setFlywheel(true), shooter),
+                new WaitCommand(FLYWHEEL_SPINUP_MS), // Așteptăm ca flywheel-ul să prindă viteză
+                new InstantCommand(blocker::notblocked, blocker),
+                new InstantCommand(intakeServo::toB, intakeServo),
+                new WaitCommand(300),
+                new InstantCommand(() -> shooter.setFeeder(true), shooter),
+                new InstantCommand(() -> intake.setPower(1.0), intake),
+                new WaitCommand(SHOOT_WAIT_MS),
+                new InstantCommand(shooter::stopAll, shooter),
+                new InstantCommand(blocker::blocked, blocker),
+                new InstantCommand(intakeServo::toA, intakeServo),
+                new InstantCommand(intake::stop, intake)
+        );
+    }
+
+    /** Intake on -> drive path -> wait -> intake off. */
+    private Command pickWithIntake(Path path, long dwellMs) {
+        return new SequentialCommandGroup(
+                new InstantCommand(() -> intake.setPower(INTAKE_POWER), intake),
+                new InstantCommand(intakeServo::toB, intakeServo),
+                follow(path),
+                new WaitCommand(dwellMs),
+                new InstantCommand(intake::stop, intake),
+                new InstantCommand(intakeServo::toA, intakeServo)
+        );
+    }
+
+    public Command autoRoutine() {
+        return new SequentialCommandGroup(
+                step("1 path1 + shoot", new SequentialCommandGroup(follow(path1()), shootSequence())),
+                step("2 path2", follow(path2())),
+                step("3 path3 pick", pickWithIntake(path3(), 300)),
+                step("4 path4 (83,20) + shoot + faras down", new SequentialCommandGroup(
+                        follow(path4()),
+                        shootSequence(),
+                        new InstantCommand(faras::toggle, faras),
+                        new WaitCommand(500)
+                )),
+                step("5 path5 (94,17) + faras up", new SequentialCommandGroup(
+                        follow(path5()),
+                        new InstantCommand(faras::toggle, faras),
+                        new WaitCommand(500)
+                )),
+                step("6 path6 (83,20)", follow(path6())),
+                step("7 path7 (122,94)", follow(path7())),
+                step("8 path8 + shoot", new SequentialCommandGroup(follow(path8()), shootSequence())),
+                step("9 path9 park", follow(path9())),
+                step("done", new InstantCommand())
+        );
+    }
+
+    private Command step(String name, Command command) {
+        return new SequentialCommandGroup(new InstantCommand(() -> step = name), command);
+    }
+
+    @Override
+    protected void initRobot() {
+        follower = new FollowerSubsystem(hardwareMap);
+        follower.setPose(start);
+
+        intake = new Intake(hardwareMap);
+        shooter = new ShooterSubsystem(hardwareMap);
+        blocker = new BlockerServo(hardwareMap);
+        intakeServo = new IntakeServo(hardwareMap);
+        faras = new FarasSubsystem(hardwareMap);
+        hood = new HoodServo(hardwareMap);
+
+        blocker.blocked();
+        follower.periodic();
+    }
+
+    @Override
+    protected void onStart() {
+        schedule(autoRoutine());
+    }
+
+    @Override
+    protected void addTelemetry() {
+        Pose pose = follower.pose();
+        telemetry.addData("Step", step);
+        telemetry.addData("Follower busy", follower.follower().isBusy());
+        telemetry.addData("X", pose.x());
+        telemetry.addData("Y", pose.y());
+        telemetry.addData("Heading", pose.heading());
     }
 }

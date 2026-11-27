@@ -20,13 +20,21 @@ public class ShooterSubsystem extends SubsystemBase {
 
     private boolean feederOn = false;
     private boolean flywheelOn = false;
+    private double targetRpm = 3800.0; // <-- Viteza implicită (ca în TeleOp)
 
     public ShooterSubsystem(HardwareMap hardwareMap) {
         feeder = hardwareMap.get(DcMotor.class, "feeder");
         flywheel = hardwareMap.get(DcMotorEx.class, FLYWHEEL_NAME);
 
-        // Folosim RUN_WITHOUT_ENCODER + bucla noastră PIDF (exact ca în Shooter Tuner)
         flywheel.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    public void setTargetRpm(double rpm) {
+        this.targetRpm = rpm;
+    }
+
+    public double getTargetRpm() {
+        return targetRpm;
     }
 
     public void toggleFeeder() {
@@ -57,7 +65,6 @@ public class ShooterSubsystem extends SubsystemBase {
         feeder.setPower(on ? 1.0 : 0.0);
     }
 
-    /** Feeder (transfer) at any power, e.g. -1.0 to run it backwards. */
     public void setFeederPower(double power) {
         feederOn = power != 0.0;
         feeder.setPower(power);
@@ -68,6 +75,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
 
     public void updateFlywheelRpm(double targetRpm) {
+        this.targetRpm = targetRpm; // Sincronizăm și variabila clasei
         if (!flywheelOn) {
             flywheel.setPower(0.0);
             return;
@@ -84,5 +92,14 @@ public class ShooterSubsystem extends SubsystemBase {
         setFeeder(false);
         flywheelOn = false;
         flywheel.setPower(0.0);
+    }
+
+    @Override
+    public void periodic() {
+        if (flywheelOn) {
+            updateFlywheelRpm(targetRpm); // <-- Acum folosește targetRpm în loc de 2500!
+        } else {
+            flywheel.setPower(0.0);
+        }
     }
 }
