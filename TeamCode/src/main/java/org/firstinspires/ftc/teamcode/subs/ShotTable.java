@@ -7,6 +7,8 @@ package org.firstinspires.ftc.teamcode.subs;
  * sides don't match at the same distance. The side is picked automatically from the robot's Y:
  *   robot Y <  goal Y  -> TABLE_BACK   (the side you start on, e.g. BLUE start y = 9)
  *   robot Y >= goal Y  -> TABLE_FRONT  (the other side of the hive)
+ * Shared by BLUE and RED: the field halves are identical and distance is measured to your own
+ * alliance's goal, so one set of tables works for both colors.
  * (Telemetry shows which side is being used.)
  *
  * Both tables start with the BLUE table that works on one side. Re-tune the side that misses
