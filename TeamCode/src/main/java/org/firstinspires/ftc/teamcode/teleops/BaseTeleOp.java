@@ -118,13 +118,14 @@ public abstract class BaseTeleOp extends RobotOpMode {
         // R2: AutoAim + Wait 0.5s + Blocker notblocked + IntakeServo to B + Feeder ON + Intake ON
         new Trigger(() -> driver.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > AIM_TRIGGER_THRESHOLD)
                 .whenActive(new SequentialCommandGroup(
-                        new InstantCommand(autoAim::schedule), // Pornește țintirea automată imediat
-                        new WaitCommand(200),                  // Așteaptă 0.5 secunde
+                        new InstantCommand(autoAim::schedule),
+                        new WaitCommand(200),
+                        new InstantCommand(() -> intake.setPower(1), intake),
                         new InstantCommand(intakeServo::toB, intakeServo),
                         new InstantCommand(blockerServo::notblocked, blockerServo),
                         new WaitCommand(400),
                         new InstantCommand(() -> shooterSubsystem.setFeeder(true), shooterSubsystem),
-                        new InstantCommand(() -> intake.setPower(1), intake),
+
                         new InstantCommand(() -> leds.setColor(LedSubsystem.VIOLET), leds)
                 ))
                 .whenInactive(new SequentialCommandGroup(

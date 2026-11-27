@@ -39,8 +39,8 @@ public class FarasSubsystem extends SubsystemBase {
     public static volatile double MOVE_POWER = 0.7;       // speed while moving up or down
     public static volatile double DOWN_TIME_MS = 500;     // how long to run DOWN
     public static volatile double UP_TIME_MS = 500;       // how long to run UP (against gravity, may need longer)
-    public static volatile double HOLD_UP_POWER = 0.1;    // keeps it pushed UP at the top
-    public static volatile double HOLD_DOWN_POWER = 0.05; // keeps it pushed DOWN at the bottom
+    public static volatile double HOLD_UP_POWER = 0.0;    // CRServos spin when power != 0 -> set to 0.0 to stop
+    public static volatile double HOLD_DOWN_POWER = 0.0;  // CRServos spin when power != 0 -> set to 0.0 to stop
 
     private final CRServo crServo;
     private final Servo servo;
