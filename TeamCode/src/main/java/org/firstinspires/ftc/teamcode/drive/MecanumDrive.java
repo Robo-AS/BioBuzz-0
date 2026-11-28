@@ -28,7 +28,7 @@ public class MecanumDrive {
     /** true = ROBOT-centric driving (stick forward = robot forward). Auto aim still uses the real heading to turn. */
     public static boolean ROBOT_CENTRIC = true;
     /** Robot centric: FORWARD speed is scaled to this (full stick = 0.6). Backward, strafe and turn stay at 1.0. */
-    public static double MAX_FORWARD_POWER = 0.6;
+    public static double MAX_FORWARD_POWER = 1;
 
     public static double AIM_TOLERANCE_RAD = Math.toRadians(1.0);
     public static double AIM_TURN_SIGN = 1.0;       // +1 = correct for this drivetrain. -1 makes auto aim AND heading hold turn away and shake

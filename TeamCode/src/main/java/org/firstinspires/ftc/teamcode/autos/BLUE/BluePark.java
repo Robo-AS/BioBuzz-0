@@ -23,9 +23,9 @@ import org.firstinspires.ftc.teamcode.subs.ShooterSubsystem;
 public class BluePark extends RobotOpMode {
 
     public static double INTAKE_POWER = 1.0;
-    public static double DRIVE_SPEED = 0.6;
+    public static double DRIVE_SPEED = 1;
     public static long FLYWHEEL_WAIT_MS = 2500; // Așteaptă 2.5 secunde ca flywheel-ul să ajungă la turație maximă
-    public static long SHOOT_WAIT_MS = 1200;
+    public static long SHOOT_WAIT_MS = 2200;
     public static double HOOD_POSITION = 0.47;
     public static double FLYWHEEL_RPM = 3800;
 

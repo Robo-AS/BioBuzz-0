@@ -35,7 +35,7 @@ public abstract class BaseTeleOp extends RobotOpMode {
     /** Interpolation (ShotTable) OFF for now: fixed shot. Set USE_SHOT_TABLE = true to go back. */
     public static boolean USE_SHOT_TABLE = false;
     public static double FIXED_RPM = 3800;
-    public static double FIXED_HOOD = 0.47;
+    public static double FIXED_HOOD = 0.48;
     /** L2 released: run the transfer (feeder) backwards for this long (ms). */
     public static long TRANSFER_REVERSE_MS = 1;
     /** Options resets the pose (auto aim reference) here, for both RED and BLUE. */
